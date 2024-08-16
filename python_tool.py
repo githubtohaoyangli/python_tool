@@ -5,12 +5,10 @@ import os
 import threading
 import requests
 import getpass
-import zipfile
 import time
 import shutil
 import sys
 import sv_ttk
-from concurrent.futures import ThreadPoolExecutor, as_completed
 #1.0k开发日志
 
 user_name = getpass.getuser()
@@ -70,7 +68,9 @@ def download_file(selected_version, destination_path):
     destination = os.path.join(destination_path,file_name)
     if os.path.exists(destination):
         os.remove(destination)    
-    def download(url,frame):        
+    def download(url,frame):   
+        download_pb['value']=0 
+        download_pb["maximum"]=100    
         # 发送 GET 请求并流式处理
         proxie=proxies()
         response = requests.get(url, stream=True
@@ -90,6 +90,9 @@ def download_file(selected_version, destination_path):
                 downloaded_mb = downloaded / (1024*1024)
                 status_label.config(text=f"Downloading: {percentage:.3f}% | {downloaded_mb:.3f} MB | {file_size/(1024*1024):.3f} MB ｜ ")
                 status_label.update()
+                download_pb["value"]=percentage
+                download_pb.update()
+
             install_thread = threading.Thread(target=download,args=(url,frame))
             install_thread.start()   
     try:
