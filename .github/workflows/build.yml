@@ -6,8 +6,7 @@ on:
     pull_requests:
       - main-mac
 jobs:
-  build-and-deploy:
-    name: build python_tool
+  build:
     runs-on: x86_64_catalina
   steps:
     - name: install from requirements.txt
