@@ -5,15 +5,15 @@ import os
 import threading
 import requests
 import getpass
-import time
 import shutil
-import sys
 import sv_ttk
-#1.0k开发日志
+
+
 
 user_name = getpass.getuser()
 if os.path.exists(f"/Users/{user_name}/pt_saved/update"):
     shutil.rmtree(f"/Users/{user_name}/pt_saved/update")
+    os.system("kill Update")
 VERSIONS = [
     "3.12.0",
     "3.11.0",
@@ -25,10 +25,33 @@ VERSIONS = [
     "3.5.0"
 ]
 
+def check_python_installation():
+    try:
+        subprocess.check_output(["python3", "--version"])
+    except Exception:
+        status_label.config(text="Python3 is not installed.")
+        pip_upgrade_button.config(state="disabled")
+        install_button.config(state="disabled")
+        uninstall_button.config(state="disabled")
+        root.after(3000,clear_a)
+
+def sav_ver():
+    user_name = getpass.getuser()
+    version_len=len(VERSIONS)
+    get=version_combobox.get()
+    for i in range(version_len):
+        if get in VERSIONS[i]:
+            if os.path.exists(f"/Users/{user_name}/pt_saved/")==False:
+                os.mkdir(f"/Users/{user_name}/pt_saved/")
+            with open(f"/Users/{user_name}/pt_saved/version.txt","w") as wri:
+                wri.write(get)
 def clear_a():
     status_label.config(text="")
 def clear_b():
     sav_label.config(text="")
+
+
+
 def select_destination():
     destination_path = filedialog.askdirectory()
     if destination_path:
@@ -52,10 +75,11 @@ def proxies():
             return proxies
         except Exception:
             return False
-def download_file(selected_version, destination_path):
-    def get_url():        
+def get_url(des):  
+    if des==1:
+        #selected version
         selected=selected_version.split(".")
-        sele=len(selected)
+
         selea=int(selected[1])
         if selea>=10:
             return f"https://www.python.org/ftp/python/{selected_version}/python-{selected_version}-macos11.pkg"
@@ -63,7 +87,15 @@ def download_file(selected_version, destination_path):
             return f"https://www.python.org/ftp/python/{selected_version}/python-{selected_version}-macosx10.6.pkg"
         else:
             return f"https://www.python.org/ftp/python/{selected_version}/python-{selected_version}-macosx10.9.pkg"
-    url=get_url()
+    elif des==2:
+        return "https://githubtohaoyangli.github.io/info/info.json"
+    elif des==3:
+        return "https://githubtohaoyangli.github.io/download/python_tool/Mac/Latest/python_tool.dmg"
+def download_file(destination_path):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
+    }
+    url=get_url(1)
     file_name = url.split("/")[-1]
     destination = os.path.join(destination_path,file_name)
     if os.path.exists(destination):
@@ -71,14 +103,10 @@ def download_file(selected_version, destination_path):
     def download(url,frame):   
         download_pb['value']=0 
         download_pb["maximum"]=100    
-        # 发送 GET 请求并流式处理
         proxie=proxies()
         response = requests.get(url, stream=True
-                                ,proxies=proxie)
-        # 获取文件大小（如果可用）
+                                ,proxies=proxie,headers=headers)
         file_size = int(response.headers.get('content-length', 0))
-        # 输出文件名
-        #file_name = url.split("/")[-1]
         with open(frame, "wb") as file:
             downloaded = 0
             chunk_size = 1024*300
@@ -104,16 +132,6 @@ def download_file(selected_version, destination_path):
     except Exception as e:
         status_label.config(text=f"Download Failed: {str(e)}")
         root.after(3000,clear_a)
-def sav_ver():
-    user_name = getpass.getuser()
-    version_len=len(VERSIONS)
-    get=version_combobox.get()     
-    for i in range(version_len):
-        if get in VERSIONS[i]:
-            if os.path.exists(f"/Users/{user_name}/pt_saved/")==False:
-                os.mkdir(f"/Users/{user_name}/pt_saved/")
-            with open(f"/Users/{user_name}/pt_saved/version.txt","w") as wri:
-                wri.write(get)
 def download_selected_version():
     selected_version = version_combobox.get()
     destination_path = destination_entry.get()
@@ -125,6 +143,9 @@ def download_selected_version():
 
     download_thread = threading.Thread(target=download_file, args=(selected_version, destination_path),daemon=True)
     download_thread.start()
+
+
+
 
 def check_pip_version():
     try:
@@ -142,9 +163,6 @@ def check_pip_version():
             root.after(3000,clear_a)
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
-
-
-
 def upgrade_pip():
     try:
         subprocess.check_output(["python3", "--version"])
@@ -157,6 +175,10 @@ def upgrade_pip():
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
         root.after(3000,clear_a)
+
+
+
+
 def install_package():
     try:
         #pip freeze>python_modules.txt
@@ -222,15 +244,9 @@ def uninstall_package():
         status_label.config(text=f"Error: {str(e)}")
         root.after(3000,clear_a)
 
-def check_python_installation():
-    try:
-        subprocess.check_output(["python3", "--version"])
-    except Exception:
-        status_label.config(text="Python3 is not installed.")
-        pip_upgrade_button.config(state="disabled")
-        install_button.config(state="disabled")
-        uninstall_button.config(state="disabled")
-        root.after(3000,clear_a)
+
+
+
 def load():
     user_name = getpass.getuser() 
     if os.path.exists(f"/Users/{user_name}/pt_saved/proxy.txt"):
@@ -284,72 +300,28 @@ def load_com():
         return 0
 user_name = getpass.getuser()
 def update_pt():
-    try:
+    def download_pt():
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
+        }
+        # root.after(2000,clear_b)
+        proxy = proxies()
+        url = get_url(2)
+        file_name = url.split("/")[-1]
+        user_name = getpass.getuser()
+        destination = f"/Users/{user_name}/pt_saved"
         try:
-            user_name = getpass.getuser()
-            proxie=proxies()
-            #https://github.com/githubtohaoyangli/python_tool_update/releases/download/1.x/version.txt
-            my_version="1.0.9"
-            if os.path.exists(f"/Users/{user_name}/pt_saved/update"):
-                shutil.rmtree(f"/Users/{user_name}/pt_saved/update")
-            os.mkdir(f"/Users/{user_name}/pt_saved/update")
-            ge="https://github.com/githubtohaoyangli/python_tool_update/releases/download/1.x/version.txt"
-            r=requests.get(ge,proxies=proxie)
-            sav_label.config(text="Getting....")
-            with open(f"/Users/{user_name}/pt_saved/update/version.txt","wb")as down:
-                down.write(r.content)
-            with open (f"/Users/{user_name}/pt_saved/update/version.txt","r") as re:
-                latest_version=re.read()
-            sav_label.update()
-            if latest_version > my_version:
-                try:
-                    os.remove(f"/Users/{user_name}/pt_saved/update/version.txt")
-                    #https://github.com/githubtohaoyangli/python_tool/releases/download/1.0.1/python_tool.exe
-                    url=f"https://github.com/githubtohaoyangli/python_tool/releases/download/{latest_version}/python_tool_mac.zip"
-                    file_name = url.split("/")[-1]
-                    
-                    do=requests.get(url,stream=True,proxies=proxie)
-                    os.mkdir(f"/Users/{user_name}/pt_saved/update/soc")
-                    with open(f"/Users/{user_name}/pt_saved/update/soc/{file_name}", "wb") as file:
-                        downloaded = 0
-                        chunk_size = 1024*1024
-                        file_size = int(do.headers.get('content-length', 0))
-                        for data in do.iter_content(chunk_size=chunk_size):
-                            #nonlocal start_time
-                            file.write(data)
-                            downloaded += len(data)
-                            percentage = (downloaded / file_size) * 100
-                            update_b.config(text=f"Downloading: {percentage:.2f}%")
-                            sav_label.update()
-                    os.system(f"open /Users/{user_name}/pt_saved/update/soc/python_tool_mac.zip")
-                    sav_label.config(text="Extracting...")
-                    #.extractall(f"/Users/{user_name}/pt_saved/update/soc")
-                    time.sleep(0.5)
-                    sav_label.update()
-                    root.update_idletasks()
-                    for i in range(5):
-                        a=5
-                        sav_label.config(text=f"You're getting ready! {a}seconds.....,then restart.")
-                        time.sleep(1)
-                        a-=1
-                        sav_label.update()
-                    os.system(f"cd /Users/{user_name}/pt_saved/update/soc/python_tool_mac")
-                    os.system("./update_pt")
-                    sys.exit(0)
-                except Exception as ea:
-                    sav_label.config(text=f"Download/Install Failed: {str(ea)}")
-                    root.after(2000,clear_b)
-            else:
-                sav_label.config(text="python_tool is up to date!")
-                root.after(2000,clear_b)
-        except Exception as e:
-            sav_label.config(text=f"Getting Failed:{str(e)}")
-            root.after(2000,clear_b)
-    except Exception as a:
-        sav_label.config(text=f"Cannot update:{str(a)}")
-        root.after(2000,clear_b)
+            os.mkdir(destination + "/" + "Update")
+        except FileExistsError:
+            pass
+        response = requests.get(url, stream=True, proxies=proxy, headers=headers)
+        file_size = int(response.headers.get('content-length', 0))
 
 
+        #url = "http://githubtohaoyangli.github.io/info/info.json"
+        r = requests.get(url, headers=headers)
+
+        latest_version = r.json()["releases"]["release1"]["version"]
 def switch_theme():
     user_name = getpass.getuser()
 
@@ -389,6 +361,7 @@ def load_theme():
 
 root = tk.Tk()
 root.title("Python Tool")
+
 #TAB CONTROL
 tab_control = ttk.Notebook(root)
 #MODE TAB
