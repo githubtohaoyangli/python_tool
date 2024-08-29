@@ -1,14 +1,24 @@
-name: CI Build
+name: CI Build(macos)
 on:
   push:
-    branches:
-      - main-mac
-    pull_requests:
-      - main-mac
+    branches: ["main-mac"]
+    pull_requests: ["main-mac"]
 jobs:
   build:
-    runs-on: x86_64_catalina
+    runs-on: x86_64_monterey
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [ 3.12 ]
   steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+    - uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }
     - name: install from requirements.txt
-      run: pip install -r requirements.txt
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
 
