@@ -9,7 +9,7 @@ jobs:
     runs-on: x86_64_sonoma
   steps:
     - name: Checkout Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
     - name: Install homebrew
       run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     - name: install from requirements.txt
