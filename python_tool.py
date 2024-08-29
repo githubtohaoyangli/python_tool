@@ -4,14 +4,16 @@ import subprocess
 import os
 import threading
 import requests
-import sv_ttk
+import getpass
 import time
-import wget
-import zipfile
 import shutil
-my_path=os.getcwd()
-if os.path.exists(f"{my_path}\\saved")==False:
-    os.mkdir(f"{my_path}\\saved")
+import sys
+import sv_ttk
+#1.0k开发日志
+
+user_name = getpass.getuser()
+if os.path.exists(f"/Users/{user_name}/pt_saved/update"):
+    shutil.rmtree(f"/Users/{user_name}/pt_saved/update")
 VERSIONS = [
     "3.12.0",
     "3.11.0",
@@ -22,171 +24,293 @@ VERSIONS = [
     "3.6.0",
     "3.5.0"
 ]
-def clear():
+
+def clear_a():
     status_label.config(text="")
+def clear_b():
+    sav_label.config(text="")
 def select_destination():
     destination_path = filedialog.askdirectory()
     if destination_path:
         destination_entry.delete(0, tk.END)
         destination_entry.insert(0, destination_path)
-
+def proxies():
+    address=address_entry.get()
+    port=port_entry.get()
+    if address=="":
+        return False
+    elif port=="":
+        return False
+    else:
+        try:
+            int(port)
+            proxy = f"http://{address}:{port}"
+            proxies = {
+                        "http":proxy,
+                        "https":proxy
+                    }
+            return proxies
+        except Exception:
+            return False
 def download_file(selected_version, destination_path):
-    file_name = f"python-{selected_version}-amd64.exe"
-    destination = os.path.join(destination_path, file_name)
-    
+    def get_url():        
+        selected=selected_version.split(".")
+        sele=len(selected)
+        selea=int(selected[1])
+        if selea>=10:
+            return f"https://www.python.org/ftp/python/{selected_version}/python-{selected_version}-macos11.pkg"
+        elif selea<=6:
+            return f"https://www.python.org/ftp/python/{selected_version}/python-{selected_version}-macosx10.6.pkg"
+        else:
+            return f"https://www.python.org/ftp/python/{selected_version}/python-{selected_version}-macosx10.9.pkg"
+    url=get_url()
+    file_name = url.split("/")[-1]
+    destination = os.path.join(destination_path,file_name)
     if os.path.exists(destination):
-        os.remove(destination)
-    
-    def progress_bar_hook(current, total, width=80):
-        progress = int(current / total * 100)
-        progress_bar['value'] = progress
-        downloaded_mb = current / (1024 * 1024)
-        status_label.config(text=f"Downloading: {downloaded_mb:.2f} MB / {total / (1024 * 1024):.2f} MB")
-        root.update_idletasks()
+        os.remove(destination)    
+    def download(url,frame):   
+        download_pb['value']=0 
+        download_pb["maximum"]=100    
+        # 发送 GET 请求并流式处理
+        proxie=proxies()
+        response = requests.get(url, stream=True
+                                ,proxies=proxie)
+        # 获取文件大小（如果可用）
+        file_size = int(response.headers.get('content-length', 0))
+        # 输出文件名
+        #file_name = url.split("/")[-1]
+        with open(frame, "wb") as file:
+            downloaded = 0
+            chunk_size = 1024*300
+            
+            for data in response.iter_content(chunk_size=chunk_size):
+                file.write(data)
+                downloaded += len(data)
+                percentage = (downloaded / file_size) * 100
+                downloaded_mb = downloaded / (1024*1024)
+                status_label.config(text=f"Downloading: {percentage:.3f}% | {downloaded_mb:.3f} MB | {file_size/(1024*1024):.3f} MB ｜ ")
+                status_label.update()
+                download_pb["value"]=percentage
+                download_pb.update()
 
+            install_thread = threading.Thread(target=download,args=(url,frame))
+            install_thread.start()   
     try:
-        url = f"https://www.python.org/ftp/python/{selected_version}/python-{selected_version}-amd64.exe"
-        # 使用wget下载文件
-        wget.download(url, out=destination, bar=progress_bar_hook)
+        sav_ver()
+        download(url,destination)
         status_label.config(text="Download Complete!")
+        
+        root.after(3000,clear_a)
     except Exception as e:
         status_label.config(text=f"Download Failed: {str(e)}")
+        root.after(3000,clear_a)
+def sav_ver():
+    user_name = getpass.getuser()
+    version_len=len(VERSIONS)
+    get=version_combobox.get()     
+    for i in range(version_len):
+        if get in VERSIONS[i]:
+            if os.path.exists(f"/Users/{user_name}/pt_saved/")==False:
+                os.mkdir(f"/Users/{user_name}/pt_saved/")
+            with open(f"/Users/{user_name}/pt_saved/version.txt","w") as wri:
+                wri.write(get)
+def download_selected_version():
+    selected_version = version_combobox.get()
+    destination_path = destination_entry.get()
+
+    if not os.path.exists(destination_path):
+        status_label.config(text="Invalid path!")
+        root.after(2000, clear_a)
+        return
+
+    download_thread = threading.Thread(target=download_file, args=(selected_version, destination_path),daemon=True)
+    download_thread.start()
 
 def check_pip_version():
     try:
-        pip_version = subprocess.check_output(["pip", "--version"], creationflags=subprocess.CREATE_NO_WINDOW).decode().strip().split()[1]
+        pip_version = subprocess.check_output(["pip3", "--version"]).decode().strip().split()[1]
         r = requests.get("https://pypi.org/pypi/pip/json")
         latest_version = r.json()["info"]["version"]
 
         if pip_version != latest_version:
             status_label.config(text=f"Current pip version: {pip_version}\nLatest pip version: {latest_version}\nUpdating pip...")
-            subprocess.run(["python", "-m", "pip", "install", "--upgrade", "pip"], creationflags=subprocess.CREATE_NO_WINDOW)
-            status_label.config(text="pip has been updated!")
+            subprocess.run(["python3", "-m", "pip", "install", "--upgrade", "pip"])
+            status_label.config(text=f"pip has been updated!{latest_version}")
+            root.after(3000,clear_a)
         else:
             status_label.config(text=f"pip is up to date: {pip_version}")
+            root.after(3000,clear_a)
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
 
-def download_selected_version():
-    selected_version = version_combobox.get()
-    destination_path = destination_entry.get()
-    
-    if not os.path.exists(destination_path):
-        status_label.config(text="Invalid path!")
-        return
-    
-    download_thread = threading.Thread(target=download_file, args=(selected_version, destination_path))
-    download_thread.start()
+
 
 def upgrade_pip():
     try:
-        subprocess.check_output(["python", "--version"], creationflags=subprocess.CREATE_NO_WINDOW)
-        check_pip_version()
+        subprocess.check_output(["python3", "--version"])
+        sav_ver()
+        upgrade_thread = threading.Thread(target=check_pip_version, daemon=True)
+        upgrade_thread.start()
     except FileNotFoundError:
         status_label.config(text="Python is not installed.")
+        root.after(3000,clear_a)
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
-
+        root.after(3000,clear_a)
 def install_package():
     try:
-        subprocess.check_output(["python", "--version"], creationflags=subprocess.CREATE_NO_WINDOW)
+        #pip freeze>python_modules.txt
+        subprocess.check_output(["python3", "--version"])
         package_name = package_entry.get()
         
-        def install_package_thread():
+        def install_package_thread():  
             try:
-                result = subprocess.run(["python", "-m", "pip", "install", package_name], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
-                if "Successfully installed" in result.stdout:
-                    status_label.config(text=f"Package '{package_name}' has been installed successfully!")
+                installed_packages = subprocess.check_output(["python3", "-m", "pip", "list", "--format=columns"], text=True)
+                if package_name.lower() in installed_packages.lower():
+                    status_label.config(text=f"Package '{package_name}' is already installed.")
+                    root.after(3000,clear_a)
                 else:
-                    status_label.config(text=f"Error installing package '{package_name}': {result.stderr}")
+                    result = subprocess.run(["python3", "-m", "pip", "install", package_name], capture_output=True, text=True)
+                    if "Successfully installed" in result.stdout:
+                        status_label.config(text=f"Package '{package_name}' has been installed successfully!")
+                        root.after(3000,clear_a)
+                        #Requirement already satisfied
+                    #elif "Requirement already satisfied" in result.stdout:
+                        #status_label.config(text=f"Package '{package_name}' is already installed.")
+                        #root.after(3000,clear_a)
+                    else:
+                        status_label.config(text=f"Error installing package '{package_name}': {result.stderr}")
+                        root.after(3000,clear_a)
             except Exception as e:
                 status_label.config(text=f"Error installing package '{package_name}': {str(e)}")
-        
-        install_thread = threading.Thread(target=install_package_thread)
+                root.after(3000,clear_a)
+        install_thread = threading.Thread(target=install_package_thread,daemon=True)
         install_thread.start()
     except FileNotFoundError:
         status_label.config(text="Python is not installed.")
+        root.after(3000,clear_a)
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
-
+        root.after(3000,clear_a)
 def uninstall_package():
     try:
-        subprocess.check_output(["python", "--version"], creationflags=subprocess.CREATE_NO_WINDOW)
+        subprocess.check_output(["python3", "--version"])
         package_name = package_entry.get()
-        
-        try:
-            installed_packages = subprocess.check_output(["python", "-m", "pip", "list", "--format=columns"], text=True, creationflags=subprocess.CREATE_NO_WINDOW)
-            if package_name.lower() in installed_packages.lower():
-                result = subprocess.run(["python", "-m", "pip", "uninstall", "-y", package_name], capture_output=True, text=True, creationflags=subprocess.CREATE_NO_WINDOW)
-                if "Successfully uninstalled" in result.stdout:
-                    status_label.config(text=f"Package '{package_name}' has been uninstalled successfully!")
+        def uninstall_package_thread():
+            try:
+                installed_packages = subprocess.check_output(["python3", "-m", "pip", "list", "--format=columns"], text=True)
+                if package_name.lower() in installed_packages.lower():
+                    result = subprocess.run(["python3", "-m", "pip", "uninstall", "-y", package_name], capture_output=True, text=True)
+                    if "Successfully uninstalled" in result.stdout:
+                        status_label.config(text=f"Package '{package_name}' has been uninstalled successfully!")
+                        root.after(3000,clear_a)
+                    else:
+                        status_label.config(text=f"Cannot uninstall package '{package_name}': {result.stderr}")
+                        root.after(3000,clear_a)
                 else:
-                    status_label.config(text=f"Error uninstalling package '{package_name}': {result.stderr}")
-            else:
-                status_label.config(text=f"Package '{package_name}' is not installed.")
-        except Exception as e:
-            status_label.config(text=f"Error uninstalling package '{package_name}': {str(e)}")
+                    status_label.config(text=f"Package '{package_name}' is not installed.")
+                    root.after(3000,clear_a)
+            except Exception as e:
+                status_label.config(text=f"Error uninstalling package '{package_name}': {str(e)}")
+                root.after(3000,clear_a)
+        uninstall_thread = threading.Thread(target=uninstall_package_thread, daemon=True)
+        uninstall_thread.start()
     except FileNotFoundError:
         status_label.config(text="Python is not installed.")
+        root.after(3000,clear_a)
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
+        root.after(3000,clear_a)
 
 def check_python_installation():
     try:
-        subprocess.check_output(["python", "--version"], creationflags=subprocess.CREATE_NO_WINDOW)
-    except Exception as e:
-        status_label.config(text="Python is not installed.")
+        subprocess.check_output(["python3", "--version"])
+    except Exception:
+        status_label.config(text="Python3 is not installed.")
         pip_upgrade_button.config(state="disabled")
         install_button.config(state="disabled")
         uninstall_button.config(state="disabled")
-def switch_theme():
-    if switch.get():
-        sv_ttk.set_theme("dark")
-        with open(f"{my_path}\\saved\\theme.txt","w") as a:
-            a.write("dark")
+        root.after(3000,clear_a)
+def load():
+    user_name = getpass.getuser() 
+    if os.path.exists(f"/Users/{user_name}/pt_saved/proxy.txt"):
+        with open(f"/Users/{user_name}/pt_saved/proxy.txt","r") as re:
+            ree=re.readlines()
+            reee=len(ree)
+            for i in range(reee):
+                if "address:" in ree[i]:
+                    add=ree[i].split(":")
+                    addlen=len(add)
+                    address=add[addlen-1]
+                    address=address.strip()
+                    address_entry.insert(0,address)
+                if "port" in ree[i]:
+                    poo=ree[i].split(":")
+                    poolen=len(poo)
+                    port=poo[poolen-1]
+                    port=port.strip()
+                    port_entry.insert(0,port)
     else:
-        sv_ttk.set_theme("light")
-        with open(f"{my_path}\\saved\\theme.txt","w") as a:
-            a.write("light")
-def load_theme():
+        address_entry.insert(0,"")
+        port_entry.insert(0,"")
+def save():
+    address=address_entry.get()
+    port=port_entry.get()
     try:
-        with open(f"{my_path}\\saved\\theme.txt","r") as r:
-            theme=r.read()
-        if theme =="dark":
-            switch.set(True)
-            sv_ttk.set_theme("dark")
-        elif theme =="light":
-            switch.set(False)
-            sv_ttk.set_theme("light")
+        user_name = getpass.getuser() 
+        if os.path.exists(f"/Users/{user_name}/pt_saved/proxy.txt"):
+            os.remove(f"/Users/{user_name}/pt_saved/proxy.txt")
+        if os.path.exists(f"/Users/{user_name}/pt_saved/")==False:
+            os.mkdir(f"/Users/{user_name}/pt_saved/")
+        with open(f"/Users/{user_name}/pt_saved/proxy.txt","w")as wr:
+            wr.write(f"address:{address}\n")
+            wr.write(f"port:{port}\n")
+            sav_label.config(text="Proxy settings has been saved successfully!")
+            root.after(1000,clear_b)
+    except Exception as e:
+        sav_label.config(text=f"Error: Cannot save proxy settings {str(e)}")
+        root.after(1000,clear_b)
+def load_com():
+    #f"/Users/{user_name}/pt_saved/"
+    try:
+        user_name = getpass.getuser()
+        version_len=len(VERSIONS)
+        with open(f"/Users/{user_name}/pt_saved/version.txt","r") as r:
+            re=r.read()
+        for i in range(version_len):
+            if re in VERSIONS[i]:
+                return int(i)
     except Exception:
-        sv_ttk.set_theme("light")
-
-
+        return 0
+user_name = getpass.getuser()
 def update_pt():
     try:
         try:
+            user_name = getpass.getuser()
+            proxie=proxies()
             #https://github.com/githubtohaoyangli/python_tool_update/releases/download/1.x/version.txt
-            my_version="1.0.2"
-            if os.path.exists(f"{my_path}\\saved\\update"):
-                shutil.rmtree(f"{my_path}\\saved\\update")
-            os.mkdir(f"{my_path}\\saved\\update")
+            my_version="1.0.9"
+            if os.path.exists(f"/Users/{user_name}/pt_saved/update"):
+                shutil.rmtree(f"/Users/{user_name}/pt_saved/update")
+            os.mkdir(f"/Users/{user_name}/pt_saved/update")
             ge="https://github.com/githubtohaoyangli/python_tool_update/releases/download/1.x/version.txt"
-            r=requests.get(ge)
-            status_label.config(text="Getting....")
-            with open(f"{my_path}\\saved\\update\\version.txt","wb")as down:
+            r=requests.get(ge,proxies=proxie)
+            sav_label.config(text="Getting....")
+            with open(f"/Users/{user_name}/pt_saved/update/version.txt","wb")as down:
                 down.write(r.content)
-            with open (f"{my_path}\\saved\\update\\version.txt","r") as re:
+            with open (f"/Users/{user_name}/pt_saved/update/version.txt","r") as re:
                 latest_version=re.read()
+            sav_label.update()
             if latest_version > my_version:
                 try:
-                    os.remove(f"{my_path}\\saved\\update\\version.txt")
+                    os.remove(f"/Users/{user_name}/pt_saved/update/version.txt")
                     #https://github.com/githubtohaoyangli/python_tool/releases/download/1.0.1/python_tool.exe
                     url=f"https://github.com/githubtohaoyangli/python_tool/releases/download/{latest_version}/python_tool_mac.zip"
                     file_name = url.split("/")[-1]
                     
-                    do=requests.get(url,stream=True)
-                    os.mkdir(f"{my_path}\\saved\\update\\soc")
-                    with open(f"{my_path}\\saved\\update\\soc\\{file_name}", "wb") as file:
+                    do=requests.get(url,stream=True,proxies=proxie)
+                    os.mkdir(f"/Users/{user_name}/pt_saved/update/soc")
+                    with open(f"/Users/{user_name}/pt_saved/update/soc/{file_name}", "wb") as file:
                         downloaded = 0
                         chunk_size = 1024*1024
                         file_size = int(do.headers.get('content-length', 0))
@@ -195,94 +319,154 @@ def update_pt():
                             file.write(data)
                             downloaded += len(data)
                             percentage = (downloaded / file_size) * 100
-                            status_label.config(text=f"Downloading: {percentage:.2f}%")
-                            status_label.update()
-                    f=zipfile.ZipFile(f"{my_path}\\saved\\update\\soc\\python_tool_windows.zip","r")
-                    status_label.config(text="Extracting...")
-                    f.extractall()
+                            update_b.config(text=f"Downloading: {percentage:.2f}%")
+                            sav_label.update()
+                    os.system(f"open /Users/{user_name}/pt_saved/update/soc/python_tool_mac.zip")
+                    sav_label.config(text="Extracting...")
+                    #.extractall(f"/Users/{user_name}/pt_saved/update/soc")
                     time.sleep(0.5)
+                    sav_label.update()
+                    root.update_idletasks()
                     for i in range(5):
                         a=5
-                        status_label.config(text=f"You're getting ready! {a}seconds.....,then restart.")
+                        sav_label.config(text=f"You're getting ready! {a}seconds.....,then restart.")
                         time.sleep(1)
                         a-=1
-                        status_label.update()
-                    a=os.getcwd()
-                    b=a+"\\saved\\update\\soc"
-                    os.system(f"cd {b}")
-                    os.system("update.exe")
-                    exit(0)
+                        sav_label.update()
+                    os.system(f"cd /Users/{user_name}/pt_saved/update/soc/python_tool_mac")
+                    os.system("./update_pt")
+                    sys.exit(0)
                 except Exception as ea:
-                    status_label.config(text=f"Download/Install Failed: {str(ea)}")
-                    root.after(2000,clear)
+                    sav_label.config(text=f"Download/Install Failed: {str(ea)}")
+                    root.after(2000,clear_b)
             else:
-                status_label.config(text="python_tool is up to date!")
-                root.after(2000,clear)
+                sav_label.config(text="python_tool is up to date!")
+                root.after(2000,clear_b)
         except Exception as e:
-            status_label.config(text=f"Getting Failed:{str(e)}")
-            root.after(2000,clear)
+            sav_label.config(text=f"Getting Failed:{str(e)}")
+            root.after(2000,clear_b)
     except Exception as a:
-        status_label.config(text=f"Cannot update:{str(a)}")
-        root.after(2000,clear)
+        sav_label.config(text=f"Cannot update:{str(a)}")
+        root.after(2000,clear_b)
+
+
+def switch_theme():
+    user_name = getpass.getuser()
+
+    if switch.get():
+        sv_ttk.set_theme("dark")
+        if os.path.exists(f"/Users/{user_name}/pt_saved/") == False:
+            os.mkdir(f"/Users/{user_name}/pt_saved/")
+        if os.path.exists(f"/Users/{user_name}/pt_saved/theme/") == False:
+            os.mkdir(f"/Users/{user_name}/pt_saved/theme")
+        with open(f"/Users/{user_name}/pt_saved/theme/theme.txt", "w") as a:
+            a.write("dark")
+    else:
+        sv_ttk.set_theme("light")
+        if os.path.exists(f"/Users/{user_name}/pt_saved/") == False:
+            os.mkdir(f"/Users/{user_name}/pt_saved/")
+        if os.path.exists(f"/Users/{user_name}/pt_saved/theme/") == False:
+            os.mkdir(f"/Users/{user_name}/pt_saved/theme")
+        with open(f"/Users/{user_name}/pt_saved/theme/theme.txt", "w") as a:
+            a.write("light")
+
+
+def load_theme():
+    try:
+        user_name = getpass.getuser()
+        with open(f"/Users/{user_name}/pt_saved/theme/theme.txt", "r") as r:
+            theme = r.read()
+        if theme == "dark":
+            switch.set(True)
+            sv_ttk.set_theme("dark")
+        elif theme == "light":
+            switch.set(False)
+            sv_ttk.set_theme("light")
+    except Exception:
+        sv_ttk.set_theme("light")
+
+#GUI
+
 root = tk.Tk()
-root.title("Python Downloader")
-
-
-
-
-root.iconbitmap('old.ico')
-frame = ttk.Frame(root, padding="20")
-frame.grid(row=0, column=0)
-
-version_label = ttk.Label(frame, text="Select Python Version:")
+root.title("Python Tool")
+#TAB CONTROL
+tab_control = ttk.Notebook(root)
+#MODE TAB
+fmode = ttk.Frame(root, padding="20")
+tab_control.add(fmode,text="Mode")
+tab_control.pack(expand=1, fill='both', padx=10, pady=10)
+framea_tab = ttk.Frame(fmode)
+framea_tab.pack(padx=20, pady=20)
+#PYTHON VERSION
+version_label = ttk.Label(framea_tab, text="Select Python Version:")
 version_label.grid(row=0, column=0, pady=10)
-
 selected_version = tk.StringVar()
-version_combobox = ttk.Combobox(frame, textvariable=selected_version, values=VERSIONS, state="readonly")
+version_combobox = ttk.Combobox(framea_tab, textvariable=selected_version, values=VERSIONS, state="read")
 version_combobox.grid(row=0, column=1, pady=10)
-version_combobox.current(0)
-
-destination_label = ttk.Label(frame, text="Select Destination:")
+ins=load_com()
+version_combobox.current(ins)
+#SAVE PATH
+destination_label = ttk.Label(framea_tab, text="Select Destination:")
 destination_label.grid(row=1, column=0, pady=10)
-
-destination_entry = ttk.Entry(frame, width=40)
+destination_entry = ttk.Entry(framea_tab, width=40)
 destination_entry.grid(row=1, column=1, pady=10)
-
-select_button = ttk.Button(frame, text="Select Path", command=select_destination)
+select_button = ttk.Button(framea_tab, text="Select", command=select_destination)
 select_button.grid(row=1, column=2, pady=10)
+#DOWNLOAD
+download_button = ttk.Button(framea_tab, text="Download Selected Version", command=download_selected_version)
+download_button.grid(row=2, column=0, columnspan=5, pady=10)
 
-download_button = ttk.Button(frame, text="Download Selected Version", command=download_selected_version)
-download_button.grid(row=2, column=0, columnspan=3, pady=10)
 
-pip_upgrade_button = ttk.Button(frame, text="Upgrade pip", command=upgrade_pip)
-pip_upgrade_button.grid(row=3, column=0, columnspan=3, pady=10)
+#PIP(UPDRADE)
+pip_upgrade_button = ttk.Button(framea_tab, text="Upgrade pip", command=upgrade_pip)
+pip_upgrade_button.grid(row=3, column=0, columnspan=3, pady=20)
 upgrade_pip_button = pip_upgrade_button  # Alias for disabling/enabling later
-
-package_label = ttk.Label(frame, text="Enter Package Name:")
+package_label = ttk.Label(framea_tab, text="Enter Package Name:")
 package_label.grid(row=4, column=0, pady=10)
-
-package_entry = ttk.Entry(frame, width=40)
+package_entry = ttk.Entry(framea_tab, width=40)
 package_entry.grid(row=4, column=1, pady=10)
-
-install_button = ttk.Button(frame, text="Install Package", command=install_package)
+#PIP(INSTALL)
+install_button = ttk.Button(framea_tab, text="Install Package", command=install_package)
 install_button.grid(row=5, column=0, columnspan=3, pady=10)
-
-uninstall_button = ttk.Button(frame, text="Uninstall Package", command=uninstall_package)
+#PIP(UNINSTALL)
+uninstall_button = ttk.Button(framea_tab, text="Uninstall Package", command=uninstall_package)
 uninstall_button.grid(row=6, column=0, columnspan=3, pady=10)
-
-progress_bar = ttk.Progressbar(frame, orient='horizontal', length=300, mode='determinate')
-progress_bar.grid(row=8, column=0, columnspan=3, pady=10)
+#progressbar-options:length(number),mode(determinate(从左到右)，indeterminate(来回滚动)),...
+download_pb=ttk.Progressbar(framea_tab,length=500,mode="determinate")
+download_pb.grid(row=7,column=0,pady=20,columnspan=3)
+#TEXT(TAB1)
+status_label = ttk.Label(framea_tab, text="", padding="10")
+status_label.grid(row=8, column=0, columnspan=3)
+#SETTINGS TAB
+fsetting = ttk.Frame(root, padding="20")
+tab_control.add(fsetting,text="Settings")
+tab_control.pack(expand=1, fill='both', padx=10, pady=10)
+frameb_tab = ttk.Frame(fsetting)
+frameb_tab.pack(padx=20, pady=20)
+proxy_label=ttk.Label(frameb_tab,text="Download Proxy(HTTP/HTTPS)")
+proxy_label.grid(row=0,column=1,padx=17,pady=10)
+address=ttk.Label(frameb_tab,text="Address:")
+address.grid(row=1,column=0,padx=0,pady=10)
+address_entry=ttk.Entry(frameb_tab,width=15)
+address_entry.grid(row=1,column=8,padx=0,pady=10)
+port=ttk.Label(frameb_tab,text="Port:")
+port.grid(row=2,column=0,padx=0,pady=5)
+port_entry=ttk.Entry(frameb_tab,width=5)
+port_entry.grid(row=2,column=8,padx=0,pady=5)
+sav=ttk.Button(frameb_tab,text="Apply",command=save)
+sav.grid(row=3,column=1,padx=10,pady=10, columnspan=3)
+sav.grid(row=3,column=1,padx=10,pady=10, columnspan=3)
+update_b=ttk.Button(frameb_tab,text="update pt",command=update_pt)
+update_b.grid(row=4,column=1,pady=10,padx=10, columnspan=3)
+sav_label = ttk.Label(frameb_tab, text="")
+sav_label.grid(row=5, column=1)
 switch = tk.BooleanVar()  # 创建一个BooleanVar变量，用于检测复选框状态
-themes = ttk.Checkbutton(root, text="dark mode", variable=switch, style="Switch.TCheckbutton",command=switch_theme)
-themes.grid()
-status_label = ttk.Label(frame, text="", padding="10")
-status_label.grid(row=9, column=0, columnspan=3)
-update_b=ttk.Button(frame,text="update python_tool",command=update_pt)
-update_b.grid(row=7,column=0,columnspan=3,pady=10)
+themes = ttk.Checkbutton(frameb_tab, text="dark mode", variable=switch, style="Switch.TCheckbutton",command=switch_theme)
+themes.grid(row=6,column=1,padx=10,pady=10)
+load()
 load_theme()
 # Set sv_ttk theme
-switch_theme()
 
 check_python_installation()
-
 root.mainloop()
+#root.after(3000,)
