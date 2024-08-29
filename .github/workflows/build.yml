@@ -1,0 +1,17 @@
+name: build
+on:
+  push:
+    branches:
+      - main-mac
+jobs:
+  build-and-deploy:
+    name: build python_tool
+    runs-on: x86_64_sonoma
+  steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    - name: Install homebrew
+      run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    - name: install from requirements.txt
+      run: pip install -r requirements.txt
+
