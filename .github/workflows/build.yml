@@ -8,11 +8,8 @@ on:
 jobs:
   build-and-deploy:
     name: build python_tool
-    runs-on: x86_64_monterey
+    runs-on: x86_64_catalina
   steps:
-    - uses: actions/checkout@v4
-    - name: Installhomebrew
-      run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
     - name: install from requirements.txt
       run: pip install -r requirements.txt
 
