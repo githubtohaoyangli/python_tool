@@ -20,10 +20,15 @@ jobs:
     - name: install homebrew
       run: |
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    - name: install from requirements.txt
+    - name: install from requirements.txt and upx
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        brew install upx
     - name: build python_tool for macos
       run: |
         bash ./python_tool/build.sh
+    - name: publish python-tool.tgz
+      run: |
+        tar -czf ./python_tool/dist/python_tool.tgz ./python_tool/dist/python_tool.app
+        /bin/mv/ ./python_tool/dist/python_tool.tgz ./python_tool.tgz
