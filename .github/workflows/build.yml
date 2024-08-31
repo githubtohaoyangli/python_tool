@@ -13,6 +13,7 @@ on:
 
 jobs:
   build-and-deploy:
+    name : build pyinstaller
     runs-on: x86_64_monterey
     steps:
     - name: check
