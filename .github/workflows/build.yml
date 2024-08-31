@@ -13,7 +13,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: macos-latest
+    runs-on: x86_64_monterey
     steps:
     - name: check
       uses: actions/checkout@v4
