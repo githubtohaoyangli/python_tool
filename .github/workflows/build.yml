@@ -28,7 +28,7 @@ jobs:
     - name: build python_tool for macos
       run: |
         bash ./python_tool/build.sh
-    - name: publish python-tool.tgz
+    - name: publish python-tool.zip
       run: |
-        tar -czf ./python_tool/dist/python_tool.tgz ./python_tool/dist/python_tool.app
-        /bin/mv/ ./python_tool/dist/python_tool.tgz ./python_tool.tgz
+        cd ./python_tool/dist/python_tool.app
+        zip -pr python_tool.zip
