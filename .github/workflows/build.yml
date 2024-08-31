@@ -24,7 +24,8 @@ jobs:
         pip install -r requirements.txt
     - name: build python_tool for macos
       run: |
-        bash ./python_tool/build.sh
+        cd ./python_tool
+        bash build.sh
     - name: publish python-tool.zip
       run: |
         cd ./python_tool/dist/
