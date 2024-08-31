@@ -2,8 +2,8 @@ name: CI Build(macos)
 
 
 on:
-  - workflow_dispatch
-  - push
+  workflow_dispatch:
+  push:
 
 
 
