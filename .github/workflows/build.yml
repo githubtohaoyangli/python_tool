@@ -27,6 +27,7 @@ jobs:
         bash ./python_tool/build.sh
     - name: publish python-tool.zip
       run: |
-        
-        cd ./python_tool/dist/python_tool
-        zip -pr python_tool.zip
+        cd ./python_tool/dist/
+        sudo rm -rf python_tool
+        cd ./python_tool/dist/python_tool.app
+        zip -pr python_tool.zip ./*
