@@ -2,14 +2,9 @@ name: CI Build(macos)
 
 
 on:
-  push:
-    branches: ["main-mac"]
-  pull_request:
-    branches: ["main-mac"]
-  check_run:
-    types: [ rerequested, completed ]
-  release:
-    types: [ published ]
+  - workflow_dispatch
+  - push
+
 
 
 
