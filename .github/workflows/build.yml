@@ -27,10 +27,5 @@ jobs:
         cd /Users/runner/work/python_tool/python_tool
         bash build.sh
         cd /Users/runner/work/python_tool/
-        mv /Users/runner/work/python_tool/python_tool
-    - name: publish python-tool.zip
-      run: |
-        
-        sudo rm -rf python_tool
-        cd /Users/runner/work/python_tool/python_tool/python_tool/dist/python_tool.app
+        mv /Users/runner/work/python_tool/python_tool /Users/runner/work/python_tool
         zip -pr python_tool.zip ./*

@@ -7,7 +7,6 @@
     <list default="true" id="c0603b82-0199-486d-b7aa-1bc9bcd15f15" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.github/workflows/build.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/build.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/python_tool/python_tool.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tool/python_tool.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,7 +56,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "Shell Script.build.sh.executor": "Run",
-    "git-widget-placeholder": "main-mac 上的 #5",
+    "git-widget-placeholder": "main-mac",
     "last_opened_file_path": "/Users/liexe/Documents/GitHub/python_tool",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -73,6 +72,11 @@
     ]
   }
 }]]></component>
+  <component name="Push.Settings">
+    <force-push-targets>
+      <force-push-target remote-path="origin" branch="main-mac" />
+    </force-push-targets>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -109,7 +113,8 @@
       <workItem from="1725765549461" duration="3547000" />
       <workItem from="1725770180455" duration="41000" />
       <workItem from="1725773106832" duration="472000" />
-      <workItem from="1725776653691" duration="327000" />
+      <workItem from="1725776653691" duration="721000" />
+      <workItem from="1725777618272" duration="164000" />
     </task>
     <servers />
   </component>
