@@ -24,11 +24,13 @@ jobs:
         pip install -r requirements.txt
     - name: build python_tool for macos
       run: |
-        cd ./python_tool
+        cd /Users/runner/work/python_tool/python_tool
         bash build.sh
+        cd /Users/runner/work/python_tool/
+        mv /Users/runner/work/python_tool/python_tool
     - name: publish python-tool.zip
       run: |
-        cd /Users/runner/work/python_tool/python_tool/python_tool/dist
+        
         sudo rm -rf python_tool
-        cd ./Users/runner/work/python_tool/python_tool/python_tool/dist/python_tool.app
+        cd /Users/runner/work/python_tool/python_tool/python_tool/dist/python_tool.app
         zip -pr python_tool.zip ./*

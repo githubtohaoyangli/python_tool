@@ -6,6 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="c0603b82-0199-486d-b7aa-1bc9bcd15f15" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.github/workflows/build.yml" beforeDir="false" afterPath="$PROJECT_DIR$/.github/workflows/build.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/python_tool/python_tool.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tool/python_tool.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,6 +51,9 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python.python_tool.executor": "Run",
+    "Python.scratch.executor": "Run",
+    "Python.scratch_1.executor": "Run",
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "Shell Script.build.sh.executor": "Run",
@@ -61,6 +66,11 @@
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "preferences.pluginManager",
     "vue.rearranger.settings.migration": "true"
+  },
+  "keyToStringList": {
+    "com.intellij.ide.scratch.ScratchImplUtil$2/新建临时文件": [
+      "Python"
+    ]
   }
 }]]></component>
   <component name="SharedIndexes">
@@ -87,7 +97,19 @@
       <workItem from="1725078572826" duration="596000" />
       <workItem from="1725079426687" duration="2103000" />
       <workItem from="1725084188656" duration="8000" />
-      <workItem from="1725091107293" duration="3161000" />
+      <workItem from="1725091107293" duration="4034000" />
+      <workItem from="1725179129589" duration="592000" />
+      <workItem from="1725180168653" duration="2020000" />
+      <workItem from="1725629208075" duration="1284000" />
+      <workItem from="1725631249937" duration="584000" />
+      <workItem from="1725708052650" duration="626000" />
+      <workItem from="1725710102811" duration="894000" />
+      <workItem from="1725718018236" duration="167000" />
+      <workItem from="1725718226465" duration="543000" />
+      <workItem from="1725765549461" duration="3547000" />
+      <workItem from="1725770180455" duration="41000" />
+      <workItem from="1725773106832" duration="472000" />
+      <workItem from="1725776653691" duration="327000" />
     </task>
     <servers />
   </component>
@@ -104,5 +126,10 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/README_md$scratch_1.coverage" NAME="scratch_1 覆盖结果" MODIFIED="1725631133463" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
+    <SUITE FILE_PATH="coverage/README_md$scratch.coverage" NAME="scratch 覆盖结果" MODIFIED="1725186820478" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$APPLICATION_CONFIG_DIR$/scratches" />
+    <SUITE FILE_PATH="coverage/README_md$python_tool.coverage" NAME="python_tool 覆盖结果" MODIFIED="1725768714657" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/python_tool" />
   </component>
 </project>

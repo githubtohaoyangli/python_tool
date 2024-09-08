@@ -7,9 +7,6 @@ import requests
 import getpass
 import shutil
 import sv_ttk
-
-
-
 user_name = getpass.getuser()
 if os.path.exists(f"/Users/{user_name}/pt_saved/update"):
     shutil.rmtree(f"/Users/{user_name}/pt_saved/update")
@@ -24,7 +21,10 @@ VERSIONS = [
     "3.6.0",
     "3.5.0"
 ]
-
+MIRROR = [
+    "python.org",
+    ""
+]
 def check_python_installation():
     try:
         subprocess.check_output(["python3", "--version"])
@@ -75,9 +75,11 @@ def proxies():
             return proxies
         except Exception:
             return False
-def get_url(des):  
+def get_url(des):
     if des==1:
         #selected version
+        selected_version=version_combobox.get()
+
         selected=selected_version.split(".")
 
         selea=int(selected[1])
@@ -109,7 +111,7 @@ def download_file(destination_path):
         file_size = int(response.headers.get('content-length', 0))
         with open(frame, "wb") as file:
             downloaded = 0
-            chunk_size = 1024*300
+            chunk_size = 1024*100
             
             for data in response.iter_content(chunk_size=chunk_size):
                 file.write(data)
@@ -121,19 +123,18 @@ def download_file(destination_path):
                 download_pb["value"]=percentage
                 download_pb.update()
 
-            install_thread = threading.Thread(target=download,args=(url,frame))
-            install_thread.start()   
+
     try:
         sav_ver()
-        download(url,destination)
-        status_label.config(text="Download Complete!")
-        
-        root.after(3000,clear_a)
+        down_thread = threading.Thread(target=download, args=(url,destination),daemon=True)
+        down_thread.start()
+        if download_pb["value"]==100:
+            status_label.config(text="Download Complete!")
+            root.after(3000,clear_a)
     except Exception as e:
         status_label.config(text=f"Download Failed: {str(e)}")
         root.after(3000,clear_a)
 def download_selected_version():
-    selected_version = version_combobox.get()
     destination_path = destination_entry.get()
 
     if not os.path.exists(destination_path):
@@ -141,8 +142,8 @@ def download_selected_version():
         root.after(2000, clear_a)
         return
 
-    download_thread = threading.Thread(target=download_file, args=(selected_version, destination_path),daemon=True)
-    download_thread.start()
+    down_thread = threading.Thread(target=download_file(destination_path),daemon=True)
+    down_thread.start()
 
 
 
