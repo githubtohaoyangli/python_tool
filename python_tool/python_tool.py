@@ -282,6 +282,7 @@ def install_package():
         root.after(3000,clear_a)
     install_button.config(state="enabled")
 def uninstall_package():
+    uninstall_button.config(state="disabled")
     try:
         subprocess.check_output(["python3", "--version"])
         package_name = package_entry.get()
@@ -310,7 +311,7 @@ def uninstall_package():
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
         root.after(3000,clear_a)
-
+    uninstall_button.config(state="enabled")
 
 
 
