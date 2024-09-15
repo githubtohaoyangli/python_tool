@@ -13,17 +13,90 @@ if os.path.exists(f"/Users/{user_name}/pt_saved/update"):
     os.system("kill Update")
 VERSIONS = [
     "3.12.0",
+    "3.12.1",
+    "3.12.2",
+    "3.12.3",
+    "3.12.4",
+    "3.12.5",
+    "3.12.6",
     "3.11.0",
+    "3.11.1",
+    "3.11.2",
+    "3.11.3",
+    "3.11.4",
+    "3.11.5",
+    "3.11.6",
+    "3.11.7",
+    "3.11.8",
+    "3.11.9",
     "3.10.0",
+    "3.10.1",
+    "3.10.2",
+    "3.10.3",
+    "3.10.4",
+    "3.10.5",
+    "3.10.6",
+    "3.10.7",
+    "3.10.8",
+    "3.10.9",
+    "3.10.10",
+    "3.10.11",
     "3.9.0",
+    "3.9.1",
+    "3.9.2",
+    "3.9.3",
+    "3.9.4",
+    "3.9.5",
+    "3.9.6",
+    "3.9.7",
+    "3.9.8",
+    "3.9.9",
     "3.8.0",
+    "3.8.1",
+    "3.8.2",
+    "3.8.3",
+    "3.8.4",
+    "3.8.5",
+    "3.8.6",
+    "3.8.7",
+    "3.8.8",
+    "3.8.9",
+    "3.8.10",
     "3.7.0",
+    "3.7.1",
+    "3.7.2",
+    "3.7.3",
+    "3.7.4",
+    "3.7.5",
+    "3.7.6",
+    "3.7.7",
+    "3.7.8",
+    "3.7.9",
     "3.6.0",
-    "3.5.0"
+    "3.6.1",
+    "3.6.2",
+    "3.6.3",
+    "3.6.4",
+    "3.6.5",
+    "3.6.6",
+    "3.6.7",
+    "3.6.8",
+    "3.5.0",
+    "3.5.1",
+    "3.5.2",
+    "3.5.3",
+    "3.5.4",
 ]
-MIRROR = [
+MIRROR_PYTHODOWLOADER = [
+    #https://registry.npmmirror.com/-/binary/python/3.10.0
+    #https://registry.npmmirror.com/-/binary/python/3.10.0/python-3.10.0-amd64.exe
     "python.org",
-    ""
+    "registry.npmmirror.com(China)"
+]
+PYTHONTOOL_DOWNLAOD = [
+    "github.io",
+    "github.com",
+    "mirror.ghproxy.com"
 ]
 def check_python_installation():
     try:
@@ -418,17 +491,16 @@ tab_control.pack(expand=1, fill='both', padx=10, pady=10)
 frameb_tab = ttk.Frame(fsetting)
 frameb_tab.pack(padx=20, pady=20)
 proxy_label=ttk.Label(frameb_tab,text="Download Proxy(HTTP/HTTPS)")
-proxy_label.grid(row=0,column=1,padx=17,pady=10)
+proxy_label.grid(row=0,column=1,pady=10,padx=80)
 address=ttk.Label(frameb_tab,text="Address:")
 address.grid(row=1,column=0,padx=0,pady=10)
 address_entry=ttk.Entry(frameb_tab,width=15)
-address_entry.grid(row=1,column=8,padx=0,pady=10)
+address_entry.grid(row=1,column=10,columnspan=4,padx=0,pady=10,)
 port=ttk.Label(frameb_tab,text="Port:")
 port.grid(row=2,column=0,padx=0,pady=5)
 port_entry=ttk.Entry(frameb_tab,width=5)
-port_entry.grid(row=2,column=8,padx=0,pady=5)
+port_entry.grid(row=2,column=10,padx=0,pady=5)
 sav=ttk.Button(frameb_tab,text="Apply",command=save)
-sav.grid(row=3,column=1,padx=10,pady=10, columnspan=3)
 sav.grid(row=3,column=1,padx=10,pady=10, columnspan=3)
 update_b=ttk.Button(frameb_tab,text="update pt",command=update_pt)
 update_b.grid(row=4,column=1,pady=10,padx=10, columnspan=3)
@@ -442,5 +514,6 @@ load_theme()
 # Set sv_ttk theme
 
 check_python_installation()
+root.resizable(False,False)
 root.mainloop()
 #root.after(3000,)
