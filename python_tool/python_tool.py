@@ -222,6 +222,7 @@ def download_selected_version():
 
 
 def check_pip_version():
+    upgrade_pip_button.config(state="disabled")
     try:
         pip_version = subprocess.check_output(["pip3", "--version"]).decode().strip().split()[1]
         r = requests.get("https://pypi.org/pypi/pip/json")
