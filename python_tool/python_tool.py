@@ -185,7 +185,6 @@ def download_file(destination_path):
         with open(frame, "wb") as file:
             downloaded = 0
             chunk_size = 1024*100
-            
             for data in response.iter_content(chunk_size=chunk_size):
                 file.write(data)
                 downloaded += len(data)
@@ -195,8 +194,6 @@ def download_file(destination_path):
                 status_label.update()
                 download_pb["value"]=percentage
                 download_pb.update()
-
-
     try:
         sav_ver()
         down_thread = threading.Thread(target=download, args=(url,destination),daemon=True)
