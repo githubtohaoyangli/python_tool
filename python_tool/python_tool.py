@@ -238,6 +238,7 @@ def check_pip_version():
             root.after(3000,clear_a)
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
+    upgrade_pip_button.config(state="enabled")
 def upgrade_pip():
     try:
         subprocess.check_output(["python3", "--version"])
