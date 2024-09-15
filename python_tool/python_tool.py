@@ -312,9 +312,6 @@ def uninstall_package():
         status_label.config(text=f"Error: {str(e)}")
         root.after(3000,clear_a)
     uninstall_button.config(state="enabled")
-
-
-
 def load():
     user_name = getpass.getuser() 
     if os.path.exists(f"/Users/{user_name}/pt_saved/proxy.txt"):
@@ -378,18 +375,19 @@ def update_pt():
         file_name = url.split("/")[-1]
         user_name = getpass.getuser()
         destination = f"/Users/{user_name}/pt_saved"
+        myver="1.1.0"
         try:
             os.mkdir(destination + "/" + "Update")
         except FileExistsError:
             pass
         response = requests.get(url, stream=True, proxies=proxy, headers=headers)
         file_size = int(response.headers.get('content-length', 0))
-
-
         #url = "http://githubtohaoyangli.github.io/info/info.json"
         r = requests.get(url, headers=headers)
-
         latest_version = r.json()["releases"]["release1"]["version"]
+        #if int(latest_version) >int(myver):
+            
+            
 def switch_theme():
     user_name = getpass.getuser()
 
@@ -452,7 +450,7 @@ destination_label.grid(row=1, column=0, pady=10)
 destination_entry = ttk.Entry(framea_tab, width=40)
 destination_entry.grid(row=1, column=1, pady=10)
 select_button = ttk.Button(framea_tab, text="Select", command=select_destination)
-select_button.grid(row=1, column=2, pady=10)
+select_button.grid(row=1, column=2, pady=10,padx=10)
 #DOWNLOAD
 download_button = ttk.Button(framea_tab, text="Download Selected Version", command=download_selected_version)
 download_button.grid(row=2, column=0, columnspan=5, pady=10)
@@ -484,30 +482,39 @@ tab_control.add(fsetting,text="Settings")
 tab_control.pack(expand=1, fill='both', padx=10, pady=10)
 frameb_tab = ttk.Frame(fsetting)
 frameb_tab.pack(padx=20, pady=20)
-proxy_label=ttk.Label(frameb_tab,text="Download Proxy(HTTP/HTTPS)")
-proxy_label.grid(row=0,column=1,pady=10,padx=80)
+
 address=ttk.Label(frameb_tab,text="Address:")
-address.grid(row=1,column=0,padx=0,pady=10)
+address.grid(row=1,column=0,padx=10,pady=10)
+
 address_entry=ttk.Entry(frameb_tab,width=15)
-address_entry.grid(row=1,column=10,columnspan=4,padx=0,pady=10,)
+address_entry.grid(row=1,column=1,columnspan=2,pady=10)
+
 port=ttk.Label(frameb_tab,text="Port:")
-port.grid(row=2,column=0,padx=0,pady=5)
+port.grid(row=2,column=0,padx=0,pady=10)
+
 port_entry=ttk.Entry(frameb_tab,width=5)
-port_entry.grid(row=2,column=10,padx=0,pady=5)
+port_entry.grid(row=2,column=1,pady=10,columnspan=2)
+
 sav=ttk.Button(frameb_tab,text="Apply",command=save)
-sav.grid(row=3,column=1,padx=10,pady=10, columnspan=3)
-update_b=ttk.Button(frameb_tab,text="update pt",command=update_pt)
-update_b.grid(row=4,column=1,pady=10,padx=10, columnspan=3)
-sav_label = ttk.Label(frameb_tab, text="")
-sav_label.grid(row=5, column=1)
+sav.grid(row=3,column=0,padx=10,pady=10,columnspan=3)
+
+update_b=ttk.Button(frameb_tab,text="update pt")
+update_b.grid(row=4,column=0,pady=10,padx=10,columnspan=3,ipadx=2,ipady=2)
+
 switch = tk.BooleanVar()  # 创建一个BooleanVar变量，用于检测复选框状态
 themes = ttk.Checkbutton(frameb_tab, text="dark mode", variable=switch, style="Switch.TCheckbutton",command=switch_theme)
-themes.grid(row=6,column=1,padx=10,pady=10)
+themes.grid(row=5,column=0,padx=10,pady=10,columnspan=3)
+
+sav_label = ttk.Label(frameb_tab, text="")
+sav_label.grid(row=6, column=0,columnspan=3)
+
+
+
 load()
 load_theme()
 # Set sv_ttk theme
 
 check_python_installation()
-root.resizable(False,False)
+
 root.mainloop()
 #root.after(3000,)
