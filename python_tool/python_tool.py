@@ -214,10 +214,6 @@ def download_selected_version():
 
     down_thread = threading.Thread(target=download_file(destination_path),daemon=True)
     down_thread.start()
-
-
-
-
 def check_pip_version():
     upgrade_pip_button.config(state="disabled")
     try:
@@ -248,11 +244,8 @@ def upgrade_pip():
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
         root.after(3000,clear_a)
-
-
-
-
 def install_package():
+    install_button.config(state="disabled")
     try:
         #pip freeze>python_modules.txt
         subprocess.check_output(["python3", "--version"])
@@ -287,6 +280,7 @@ def install_package():
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
         root.after(3000,clear_a)
+    install_button.config(state="enabled")
 def uninstall_package():
     try:
         subprocess.check_output(["python3", "--version"])
