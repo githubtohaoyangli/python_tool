@@ -386,14 +386,15 @@ def update_pt():
         r = requests.get(url, headers=headers)
         latest_version = r.json()["releases"]["release1"]["version"]
         #if int(latest_version) >int(myver):
-    root.destroy()
+    root.withdraw()
     check=tk.Tk()
     check.title("updater") 
     check_pro=ttk.Progressbar(check,length=200,mode="indeterminate")
     check_pro.grid(row=0,column=0,columnspan=3,padx=10,pady=10)
     lab=ttk.Label(check,text="Checking for update....")
     lab.grid(row=1,column=0,columnspan=3,padx=10,pady=10)
-    check.mainloop()
+    root.deiconify()
+    check.destroy()
             
 def switch_theme():
     user_name = getpass.getuser()
