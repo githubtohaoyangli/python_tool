@@ -386,7 +386,14 @@ def update_pt():
         r = requests.get(url, headers=headers)
         latest_version = r.json()["releases"]["release1"]["version"]
         #if int(latest_version) >int(myver):
-            
+    root.destroy()
+    check=tk.Tk()
+    check.title("updater") 
+    check_pro=ttk.Progressbar(check,length=200,mode="indeterminate")
+    check_pro.grid(row=0,column=0,columnspan=3,padx=10,pady=10)
+    lab=ttk.Label(check,text="Checking for update....")
+    lab.grid(row=1,column=0,columnspan=3,padx=10,pady=10)
+    check.mainloop()
             
 def switch_theme():
     user_name = getpass.getuser()
@@ -470,7 +477,7 @@ install_button.grid(row=5, column=0, columnspan=3, pady=10)
 #PIP(UNINSTALL)
 uninstall_button = ttk.Button(framea_tab, text="Uninstall Package", command=uninstall_package)
 uninstall_button.grid(row=6, column=0, columnspan=3, pady=10)
-#progressbar-options:length(number),mode(determinate(从左到右)，indeterminate(来回滚动)),...
+#progressbar-options:length(number),mode(determinate(从左到右)，indeterminate(来回滚动)),...length=500,mode="indeterminate"
 download_pb=ttk.Progressbar(framea_tab,length=500,mode="determinate")
 download_pb.grid(row=7,column=0,pady=20,columnspan=3)
 #TEXT(TAB1)
@@ -498,8 +505,7 @@ port_entry.grid(row=2,column=1,pady=10,columnspan=2)
 sav=ttk.Button(frameb_tab,text="Apply",command=save)
 sav.grid(row=3,column=0,padx=10,pady=10,columnspan=3)
 
-update_b=ttk.Button(frameb_tab,text="update pt")
-update_b.grid(row=4,column=0,pady=10,padx=10,columnspan=3,ipadx=2,ipady=2)
+
 
 switch = tk.BooleanVar()  # 创建一个BooleanVar变量，用于检测复选框状态
 themes = ttk.Checkbutton(frameb_tab, text="dark mode", variable=switch, style="Switch.TCheckbutton",command=switch_theme)
@@ -508,8 +514,13 @@ themes.grid(row=5,column=0,padx=10,pady=10,columnspan=3)
 sav_label = ttk.Label(frameb_tab, text="")
 sav_label.grid(row=6, column=0,columnspan=3)
 
+top=tk.Menu(root)
+menucheck = tk.Menu(top)
+top.add_cascade(label='Menu',menu=menucheck)
+menucheck.add_command(label="Check for update",command=update_pt)
 
 
+root.config(menu=top)
 load()
 load_theme()
 # Set sv_ttk theme
