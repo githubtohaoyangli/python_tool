@@ -96,7 +96,7 @@ MIRROR_PYTHODOWLOADER = [
 PYTHONTOOL_DOWNLAOD = [
     "github.io",
     "github.com",
-    "mirror.ghproxy.com"
+    "ghp.ci"
 ]
 def check_python_installation():
     try:
@@ -365,7 +365,7 @@ def load_com():
         return 0
 user_name = getpass.getuser()
 def update_pt():
-    def download_pt():
+    def check_ver():
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
         }
@@ -375,7 +375,7 @@ def update_pt():
         file_name = url.split("/")[-1]
         user_name = getpass.getuser()
         destination = f"/Users/{user_name}/pt_saved"
-        myver="1.1.0"
+        
         try:
             os.mkdir(destination + "/" + "Update")
         except FileExistsError:
@@ -386,16 +386,22 @@ def update_pt():
         r = requests.get(url, headers=headers)
         latest_version = r.json()["releases"]["release1"]["version"]
         #if int(latest_version) >int(myver):
-    root.withdraw()
+        return int(latest_version)
+    #root.withdraw()
+    #def download_pt():
     check=tk.Tk()
     check.title("updater") 
     check_pro=ttk.Progressbar(check,length=200,mode="indeterminate")
     check_pro.grid(row=0,column=0,columnspan=3,padx=10,pady=10)
     lab=ttk.Label(check,text="Checking for update....")
     lab.grid(row=1,column=0,columnspan=3,padx=10,pady=10)
-    root.deiconify()
+    
+    
+    
+    #root.deiconify()
+    
     check.destroy()
-            
+        
 def switch_theme():
     user_name = getpass.getuser()
 
@@ -527,6 +533,6 @@ load_theme()
 # Set sv_ttk theme
 
 check_python_installation()
-
+root.resizable(False,False)
 root.mainloop()
 #root.after(3000,)
