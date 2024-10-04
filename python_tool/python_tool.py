@@ -383,10 +383,22 @@ def update_pt():
         response = requests.get(url, stream=True, proxies=proxy, headers=headers)
         file_size = int(response.headers.get('content-length', 0))
         #url = "http://githubtohaoyangli.github.io/info/info.json"
-        r = requests.get(url, headers=headers)
+        r = requests.get(url, headers=headers,verify=False)
         latest_version = r.json()["releases"]["release1"]["version"]
         #if int(latest_version) >int(myver):
-        return int(latest_version)
+        
+        return str(str(latest_version).split(".")[0]+","+str(latest_version).split(".")[1]+","+str(latest_version).split(".")[2]).split(",")
+    def download():
+        myver="1.1.0"
+        myverl=str(myver).split(".")
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
+        }
+        url=get_url(3)
+        try:
+            if int(check_ver()[0]) > int(myverl[0]) or int(check_ver()[1]) > int(myverl[1]) or int(check_ver()[2]) > int(myverl[2]):
+                r = requests.get(url, headers=headers,verify=False,stream=True)
+
     #root.withdraw()
     #def download_pt():
     check=tk.Tk()
