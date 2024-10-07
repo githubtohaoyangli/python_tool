@@ -388,31 +388,62 @@ def update_pt():
         #if int(latest_version) >int(myver):
         
         return str(str(latest_version).split(".")[0]+","+str(latest_version).split(".")[1]+","+str(latest_version).split(".")[2]).split(",")
-    def download():
+    def prepare_download():
         myver="1.1.0"
         myverl=str(myver).split(".")
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
         }
-        url=get_url(3)
+        url=[str(get_url(3)),]
         try:
+            check_pro['value']=0 
+            check_pro["maximum"]=100
+            proxie=proxies()
             if int(check_ver()[0]) > int(myverl[0]) or int(check_ver()[1]) > int(myverl[1]) or int(check_ver()[2]) > int(myverl[2]):
-                r = requests.get(url, headers=headers,verify=False,stream=True)
+                r = requests.get(url, headers=headers,verify=False,stream=True,proxies=proxie)
+                file_size = int(r.headers.get('content-length', 0))
+                user=getpass.getuser()
+                file_des=f"/Users/{user}/pt_saved/update/dumpdownload"
+                des_pt=file_des+"/python_tool"
+                des_updater=file_des+"/updater"
+                def download(url,des):
+                    with open(frame, "wb") as file:
+                        downloaded = 0
+                        chunk_size = 1024*100
+                        for data in r.iter_content(chunk_size=chunk_size):
+                            file.write(data)
+                            downloaded += len(data)
+                            percentage = (downloaded / file_size) * 100
+                            downloaded_mb = downloaded / (1024*1024)
+                            status_label.config(text=f"Downloading: {percentage:.3f}% | {downloaded_mb:.3f} MB | {file_size/(1024*1024):.3f} MB ｜ ")
+                            status_label.update()
+                            download_pb["value"]=percentage
+                            download_pb.update()
+            else:
+                check.destroy()
+        except Exception as e:
+            lab.config(text=f"Error:{e}")
+    def no():
+        check.deiconify()
 
-    #root.withdraw()
-    #def download_pt():
     check=tk.Tk()
     check.title("updater") 
-    check_pro=ttk.Progressbar(check,length=200,mode="indeterminate")
+    check_pro=ttk.Progressbar(check,length=200,mode="determinate")
     check_pro.grid(row=0,column=0,columnspan=3,padx=10,pady=10)
     lab=ttk.Label(check,text="Checking for update....")
     lab.grid(row=1,column=0,columnspan=3,padx=10,pady=10)
+    yes_bu=ttk.Button(check,text="Yes",command=prepare_download)
+    yes_bu.grid(row=2,column=0,columnspan=3,padx=10,pady=10)
+    yes_bu=ttk.Button(check,text="No",command=no)
+    yes_bu.grid(row=2,column=0,columnspan=3,padx=10,pady=10)
+
+    
     
     
     
     #root.deiconify()
     
-    check.destroy()
+    
         
 def switch_theme():
     user_name = getpass.getuser()
@@ -523,7 +554,6 @@ port_entry.grid(row=2,column=1,pady=10,columnspan=2)
 
 sav=ttk.Button(frameb_tab,text="Apply",command=save)
 sav.grid(row=3,column=0,padx=10,pady=10,columnspan=3)
-
 
 
 switch = tk.BooleanVar()  # 创建一个BooleanVar变量，用于检测复选框状态
