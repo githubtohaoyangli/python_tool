@@ -1,3 +1,0 @@
-requests
-sv_ttk
-pyinstaller
