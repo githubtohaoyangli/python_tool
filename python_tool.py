@@ -122,9 +122,6 @@ def clear_a():
     status_label.config(text="")
 def clear_b():
     sav_label.config(text="")
-
-
-
 def select_destination():
     destination_path = filedialog.askdirectory()
     if destination_path:
