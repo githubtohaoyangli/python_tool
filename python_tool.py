@@ -404,10 +404,16 @@ def update_pt():
                 file_size = int(r.headers.get('content-length', 0))
                 user=getpass.getuser()
                 file_des=f"/Users/{user}/pt_saved/update/dumpdownload"
+                if os.path.exists(f"/Users/{user}/pt_saved/update/dumpdownload")==False:
+                    os.mkdir(f"/Users/{user}/pt_saved/update/dumpdownload")  
+                if os.path.exists(file_des+"/python_tool")==False:
+                    os.mkdir(file_des+"/python_tool")
+                if os.path.exists(file_des+"/updater")==False:
+                    os.mkdir(file_des+"/updater")
                 des_pt=file_des+"/python_tool"
                 des_updater=file_des+"/updater"
                 def download(url,des):
-                    with open(frame, "wb") as file:
+                    with open(file_des, "wb") as file:
                         downloaded = 0
                         chunk_size = 1024*100
                         for data in r.iter_content(chunk_size=chunk_size):
@@ -417,8 +423,8 @@ def update_pt():
                             downloaded_mb = downloaded / (1024*1024)
                             status_label.config(text=f"Downloading: {percentage:.3f}% | {downloaded_mb:.3f} MB | {file_size/(1024*1024):.3f} MB ｜ ")
                             status_label.update()
-                            download_pb["value"]=percentage
-                            download_pb.update()
+                            check_pro["value"]=percentage
+                            check_pro.update()
             else:
                 check.destroy()
         except Exception as e:
