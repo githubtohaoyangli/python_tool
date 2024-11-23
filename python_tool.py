@@ -734,13 +734,11 @@ themes.grid(row=5,column=0,padx=10,pady=10,columnspan=3)
 
 sav_label = ttk.Label(frameb_tab, text="")
 sav_label.grid(row=6, column=0,columnspan=3)
-
+#update(not available)
 top=tk.Menu(root)
 menucheck = tk.Menu(top)
 top.add_cascade(label='Menu',menu=menucheck)
 menucheck.add_command(label="Check for update",command=update_pt)
-
-
 root.config(menu=top)
 load()
 load_theme()
