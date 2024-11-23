@@ -6,7 +6,9 @@ import threading
 import requests
 import getpass
 import shutil
+import re
 import sv_ttk
+cancel_event = threading.Event()
 user_name = getpass.getuser()
 if os.path.exists(f"/Users/{user_name}/pt_saved/update"):
     shutil.rmtree(f"/Users/{user_name}/pt_saved/update")
@@ -98,15 +100,35 @@ PYTHONTOOL_DOWNLAOD = [
     "github.com",
     "ghp.ci"
 ]
-def check_python_installation():
+
+
+def check_python_installation(delay=3000):
+    """
+    检查Python3是否已安装。
+    
+    本函数尝试执行'python3 --version'命令来检查Python3的安装情况。
+    如果命令执行出错，说明Python3未安装，则更新界面标签并禁用相关按钮。
+    """
     try:
-        subprocess.check_output(["python3", "--version"])
-    except Exception:
+        # 执行命令并获取输出
+        version_output = subprocess.check_output(["python3", "--version"], stderr=subprocess.STDOUT, text=True)
+        
+        # 验证输出是否包含预期的Python版本信息
+        if "Python 3" not in version_output:
+            raise ValueError("Unexpected Python version output: " + version_output.strip())
+    except subprocess.CalledProcessError:
+        # 如果命令执行失败，说明Python3未安装
         status_label.config(text="Python3 is not installed.")
         pip_upgrade_button.config(state="disabled")
         install_button.config(state="disabled")
         uninstall_button.config(state="disabled")
-        root.after(3000,clear_a)
+        
+        # 延时指定时间后清除当前状态标签的文本
+        root.after(delay, clear_a)
+    except ValueError as e:
+        # 处理其他异常，例如版本输出不符合预期
+        status_label.config(text=str(e))
+        root.after(delay, clear_a)
 
 def sav_ver():
     user_name = getpass.getuser()
@@ -127,24 +149,51 @@ def select_destination():
     if destination_path:
         destination_entry.delete(0, tk.END)
         destination_entry.insert(0, destination_path)
+
+
 def proxies():
-    address=address_entry.get()
-    port=port_entry.get()
-    if address=="":
+    """
+    获取代理服务器的地址和端口，并返回一个包含代理信息的字典。
+
+    从用户界面的输入框中读取代理服务器的地址和端口。如果地址或端口为空，
+    或者端口不是一个有效的数字，则返回False。否则，将地址和端口格式化为
+    一个代理字符串，并创建一个包含HTTP和HTTPS代理的字典。
+
+    Returns:
+        False: 如果地址或端口为空，或端口不是一个有效的数字。
+        dict: 包含HTTP和HTTPS代理的字典。
+    """
+    # 获取用户输入的代理服务器地址和端口
+    address = address_entry.get()
+    port = port_entry.get()
+
+    # 检查地址是否为空
+    if not address:
         return False
-    elif port=="":
+
+    # 检查端口是否为空
+    if not port:
         return False
-    else:
-        try:
-            int(port)
-            proxy = f"http://{address}:{port}"
-            proxies = {
-                        "http":proxy,
-                        "https":proxy
-                    }
-            return proxies
-        except Exception:
+
+    # 验证地址格式
+    if not re.match(r'^[a-zA-Z0-9.-]+$', address):
+        return False
+
+    # 尝试将端口转换为整数，并构建代理字符串
+    try:
+        port = int(port)
+        if port <= 0 or port > 65535:
             return False
+        proxy = f"http://{address}:{port}"
+
+        # 创建并返回包含代理信息的字典
+        proxies = {
+            "http": proxy,
+            "https": proxy
+        }
+        return proxies
+    except ValueError:
+        return False
 def get_url(des):
     if des==1:
         #selected version
@@ -167,40 +216,70 @@ def download_file(destination_path):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
     }
-    url=get_url(1)
+    url = get_url(1)
     file_name = url.split("/")[-1]
-    destination = os.path.join(destination_path,file_name)
+    destination = os.path.join(destination_path, file_name)
     if os.path.exists(destination):
-        os.remove(destination)    
-    def download(url,frame):   
-        download_pb['value']=0 
-        download_pb["maximum"]=100    
-        proxie=proxies()
-        response = requests.get(url, stream=True
-                                ,proxies=proxie,headers=headers)
+        os.remove(destination)
+
+    def download(url, frame):
+        download_pb['value'] = 0
+        download_pb["maximum"] = 100
+        proxie = proxies()
+        response = requests.get(url, stream=True, proxies=proxie, headers=headers)
         file_size = int(response.headers.get('content-length', 0))
         with open(frame, "wb") as file:
             downloaded = 0
-            chunk_size = 1024*100
+            chunk_size = 1024 * 100
             for data in response.iter_content(chunk_size=chunk_size):
+                if cancel_event.is_set():
+                    status_label.config(text="Download Interrupted!")
+                    root.after(3000, clear_a)
+                    return
                 file.write(data)
                 downloaded += len(data)
                 percentage = (downloaded / file_size) * 100
-                downloaded_mb = downloaded / (1024*1024)
-                status_label.config(text=f"Downloading: {percentage:.3f}% | {downloaded_mb:.3f} MB | {file_size/(1024*1024):.3f} MB ｜ ")
+                downloaded_mb = downloaded / (1024 * 1024)
+                status_label.config(text=f"Downloading: {percentage:.3f}% | {downloaded_mb:.3f} MB | {file_size / (1024 * 1024):.3f} MB ｜ ")
                 status_label.update()
-                download_pb["value"]=percentage
+                download_pb["value"] = percentage
                 download_pb.update()
+        status_label.config(text="Download Complete!")
+        root.after(3000, clear_a)
+
     try:
         sav_ver()
-        down_thread = threading.Thread(target=download, args=(url,destination),daemon=True)
+        down_thread = threading.Thread(target=download, args=(url, destination), daemon=True)
         down_thread.start()
-        if download_pb["value"]==100:
-            status_label.config(text="Download Complete!")
-            root.after(3000,clear_a)
+        cancel_download_button.config(state="enabled")
+        down_thread.join()
+        cancel_download_button.config(state="disabled")
     except Exception as e:
         status_label.config(text=f"Download Failed: {str(e)}")
-        root.after(3000,clear_a)
+        root.after(3000, clear_a)
+
+# 中断下载函数
+def cancel_download():
+    cancel_event.set()
+    status_label.config(text="Cancelling download...")
+    download_pb['value'] = 0  # 重置进度条
+    
+    # 获取目标文件路径
+    destination_path = destination_entry.get()
+    url = get_url(1)
+    file_name = url.split("/")[-1]
+    destination = os.path.join(destination_path, file_name)
+    
+    # 检查目标文件是否存在，如果存在则删除
+    if os.path.exists(destination):
+        os.remove(destination)
+        status_label.config(text="Download cancelled and incomplete file removed.")
+    else:
+        status_label.config(text="Download cancelled.")
+    
+    root.after(3000, clear_a)
+
+# 下载版本函数
 def download_selected_version():
     destination_path = destination_entry.get()
 
@@ -209,38 +288,128 @@ def download_selected_version():
         root.after(2000, clear_a)
         return
 
-    down_thread = threading.Thread(target=download_file(destination_path),daemon=True)
+    cancel_event.clear()
+    down_thread = threading.Thread(target=download_file, args=(destination_path,), daemon=True)
     down_thread.start()
-def check_pip_version():
-    upgrade_pip_button.config(state="disabled")
+status_label = None
+upgrade_pip_button = None
+root = None
+pip_upgrade_button = None
+def get_current_pip_version():
+    """
+    获取当前安装的 pip 版本。
+    
+    Returns:
+        str: 当前 pip 版本号。
+    """
     try:
         pip_version = subprocess.check_output(["pip3", "--version"]).decode().strip().split()[1]
-        r = requests.get("https://pypi.org/pypi/pip/json")
-        latest_version = r.json()["info"]["version"]
+        return pip_version
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError("Failed to get current pip version.") from e
+def update_pip_button_text():
+    """
+    更新 pip 升级按钮的文本。
+    """
+    def update_pip_button():
+        
+        try:
+            current_version = get_current_pip_version()
+            pip_upgrade_button.config(text=f"Upgrade pip: {current_version}")
+        except Exception as e:
+            pip_upgrade_button.config(text=f"Error: {str(e)}")
+        # 每 5 秒钟再次调用此函数
+        root.after(1000, update_pip_button_text)
+    upbuthread=threading.Thread(target=update_pip_button, daemon=True)
+    upbuthread.start()
+    
 
-        if pip_version != latest_version:
-            status_label.config(text=f"Current pip version: {pip_version}\nLatest pip version: {latest_version}\nUpdating pip...")
-            subprocess.run(["python3", "-m", "pip", "install", "--upgrade", "pip"])
-            status_label.config(text=f"pip has been updated!{latest_version}")
-            root.after(3000,clear_a)
+def start_pip_version_update():
+    """
+    启动 pip 版本更新的定时任务。
+    """
+    update_pip_button_text()
+def get_latest_pip_version():
+    """
+    获取最新可用的 pip 版本。
+    
+    Returns:
+        str: 最新的 pip 版本号。
+        
+
+    """
+    #/usr/local/opt/python@3.12/bin/python3.12 -m pip install --upgrade pip
+    try:
+        response = requests.get("https://pypi.org/pypi/pip/json")
+        response.raise_for_status()
+        latest_version = response.json()["info"]["version"]
+        return latest_version
+    except requests.RequestException as e:
+        raise RuntimeError("Failed to get latest pip version.") from e
+
+def update_pip(latest_version):
+    """
+    更新 pip 到最新版本。
+    
+    Args:
+        latest_version (str): 最新的 pip 版本号。
+    """
+    try:
+        up_pip=subprocess.run(["pip", "install", "--upgrade", "pip","--break-system-packages"], check=True)
+        if "Successfully installed" in up_pip.stdout.decode():
+            status_label.config(text=f"pip has been updated to {latest_version}")
+            update_pip_button_text()
         else:
-            status_label.config(text=f"pip is up to date: {pip_version}")
-            root.after(3000,clear_a)
+            status_label.config(text=f"Failed to update pip.:we don't know why")
+            update_pip_button_text()
+        root.after(3000, clear_a)
+    except subprocess.CalledProcessError as e:
+        try:
+            up_pip=subprocess.run(["pip3", "install", "--upgrade", "pip","--break-system-packages"], check=True)
+            if "Successfully installed" in up_pip.stdout.decode():
+                status_label.config(text=f"pip has been updated to {latest_version}")
+                update_pip_button_text()
+            else:
+                status_label.config(text=f"Failed to update pip.:we don't know why")
+                update_pip_button_text()
+            root.after(3000, clear_a)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(f"Failed to update pip.:{str(e)}") from e
+        
+def check_pip_version():
+    """
+    检查当前 pip 版本是否为最新版本，如果不是则进行更新。
+    """
+    upgrade_pip_button.config(state="disabled")
+    try:
+        current_version = get_current_pip_version()
+        latest_version = get_latest_pip_version()
+
+        if current_version != latest_version:
+            status_label.config(text=f"Current pip version: {current_version}\nLatest pip version: {latest_version}\nUpdating pip...")
+            update_pip(latest_version)
+        else:
+            status_label.config(text=f"pip is up to date: {current_version}")
+            root.after(3000, clear_a)
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
-    upgrade_pip_button.config(state="enabled")
+    finally:
+        upgrade_pip_button.config(state="enabled")
+
 def upgrade_pip():
+    """
+    启动一个线程来检查并更新 pip。
+    """
     try:
         subprocess.check_output(["python3", "--version"])
-        sav_ver()
         upgrade_thread = threading.Thread(target=check_pip_version, daemon=True)
         upgrade_thread.start()
     except FileNotFoundError:
         status_label.config(text="Python is not installed.")
-        root.after(3000,clear_a)
+        root.after(3000, clear_a)
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
-        root.after(3000,clear_a)
+        root.after(3000, clear_a)
 def install_package():
     install_button.config(state="disabled")
     try:
@@ -514,28 +683,28 @@ select_button.grid(row=1, column=2, pady=10,padx=10)
 #DOWNLOAD
 download_button = ttk.Button(framea_tab, text="Download Selected Version", command=download_selected_version)
 download_button.grid(row=2, column=0, columnspan=5, pady=10)
-
-
+cancel_download_button = ttk.Button(framea_tab, text="Cancel Download", command=cancel_download, state="disabled")
+cancel_download_button.grid(row=3, column=0, columnspan=3, pady=10)
 #PIP(UPDRADE)
-pip_upgrade_button = ttk.Button(framea_tab, text="Upgrade pip", command=upgrade_pip)
-pip_upgrade_button.grid(row=3, column=0, columnspan=3, pady=20)
+pip_upgrade_button = ttk.Button(framea_tab, text="Upgrade pip: Checking...", command=upgrade_pip)
+pip_upgrade_button.grid(row=4, column=0, columnspan=3, pady=20)
 upgrade_pip_button = pip_upgrade_button  # Alias for disabling/enabling later
 package_label = ttk.Label(framea_tab, text="Enter Package Name:")
-package_label.grid(row=4, column=0, pady=10)
+package_label.grid(row=5, column=0, pady=10)
 package_entry = ttk.Entry(framea_tab, width=40)
-package_entry.grid(row=4, column=1, pady=10)
+package_entry.grid(row=5, column=1, pady=10)
 #PIP(INSTALL)
 install_button = ttk.Button(framea_tab, text="Install Package", command=install_package)
-install_button.grid(row=5, column=0, columnspan=3, pady=10)
+install_button.grid(row=6, column=0, columnspan=3, pady=10)
 #PIP(UNINSTALL)
 uninstall_button = ttk.Button(framea_tab, text="Uninstall Package", command=uninstall_package)
-uninstall_button.grid(row=6, column=0, columnspan=3, pady=10)
+uninstall_button.grid(row=7, column=0, columnspan=3, pady=10)
 #progressbar-options:length(number),mode(determinate(从左到右)，indeterminate(来回滚动)),...length=500,mode="indeterminate"
 download_pb=ttk.Progressbar(framea_tab,length=500,mode="determinate")
-download_pb.grid(row=7,column=0,pady=20,columnspan=3)
+download_pb.grid(row=8,column=0,pady=20,columnspan=3)
 #TEXT(TAB1)
 status_label = ttk.Label(framea_tab, text="", padding="10")
-status_label.grid(row=8, column=0, columnspan=3)
+status_label.grid(row=9, column=0, columnspan=3)
 #SETTINGS TAB
 fsetting = ttk.Frame(root, padding="20")
 tab_control.add(fsetting,text="Settings")
@@ -576,7 +745,7 @@ root.config(menu=top)
 load()
 load_theme()
 # Set sv_ttk theme
-
+update_pip_button_text()
 check_python_installation()
 root.resizable(False,False)
 root.mainloop()
