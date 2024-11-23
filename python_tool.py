@@ -8,6 +8,10 @@ import getpass
 import shutil
 import re
 import sv_ttk
+import shlex
+import logging
+from concurrent.futures import ThreadPoolExecutor
+import functools
 cancel_event = threading.Event()
 user_name = getpass.getuser()
 if os.path.exists(f"/Users/{user_name}/pt_saved/update"):
@@ -295,6 +299,12 @@ status_label = None
 upgrade_pip_button = None
 root = None
 pip_upgrade_button = None
+
+
+
+# 配置日志记录
+logging.basicConfig(level=logging.INFO)
+
 def get_current_pip_version():
     """
     获取当前安装的 pip 版本。
@@ -303,50 +313,82 @@ def get_current_pip_version():
         str: 当前 pip 版本号。
     """
     try:
-        pip_version = subprocess.check_output(["pip3", "--version"]).decode().strip().split()[1]
-        return pip_version
+        command = "pip3 --version"
+        args = shlex.split(command)
+        output = subprocess.check_output(args).decode().strip()
+        logging.info(f"Command output: {output}")
+        match = re.search(r'pip (\d+\.\d+\.\d+)', output)
+        if match:
+            pip_version = match.group(1)
+            return pip_version
+        else:
+            raise ValueError("Unexpected output format from pip --version.")
     except subprocess.CalledProcessError as e:
-        raise RuntimeError("Failed to get current pip version.") from e
+        logging.error("Failed to get current pip version due to a command error.", exc_info=True)
+        raise RuntimeError("Failed to get current pip version due to a command error.") from e
+    except OSError as e:
+        logging.error("Failed to get current pip version due to an OS error.", exc_info=True)
+        raise RuntimeError("Failed to get current pip version due to an OS error.") from e
+    except ValueError as e:
+        logging.error("Failed to parse the pip version.", exc_info=True)
+        raise RuntimeError("Failed to parse the pip version.") from e
+
+
+
+# 创建一个线程池，最大工作线程数为 5
+executor = ThreadPoolExecutor(max_workers=5)
+
 def update_pip_button_text():
     """
     更新 pip 升级按钮的文本。
     """
     def update_pip_button():
-        
+        """
+        更新按钮文本的具体逻辑。
+        """
         try:
+            # 获取当前 pip 版本
             current_version = get_current_pip_version()
+            # 更新按钮文本
             pip_upgrade_button.config(text=f"Upgrade pip: {current_version}")
         except Exception as e:
-            pip_upgrade_button.config(text=f"Error: {str(e)}")
+            # 记录错误日志
+            logging.error(f"Error updating pip button text: {str(e)}")
+            # 设置按钮文本为错误提示
+            pip_upgrade_button.config(text="Error: Failed to update pip version")
         # 每 5 秒钟再次调用此函数
-        root.after(1000, update_pip_button_text)
-    upbuthread=threading.Thread(target=update_pip_button, daemon=True)
-    upbuthread.start()
+        root.after(5000, update_pip_button_text)
+    # 提交任务到线程池
+    executor.submit(update_pip_button)
     
-
-def start_pip_version_update():
-    """
-    启动 pip 版本更新的定时任务。
-    """
-    update_pip_button_text()
+@functools.lru_cache(maxsize=1)
 def get_latest_pip_version():
     """
     获取最新可用的 pip 版本。
     
     Returns:
         str: 最新的 pip 版本号。
-        
-
     """
-    #/usr/local/opt/python@3.12/bin/python3.12 -m pip install --upgrade pip
     try:
+        # 发起 HTTP GET 请求获取 pip 的最新版本信息
         response = requests.get("https://pypi.org/pypi/pip/json")
         response.raise_for_status()
+        
+        # 检查响应头中的 Content-Type 是否为 application/json
+        if 'application/json' not in response.headers.get('Content-Type', ''):
+            raise ValueError("Unexpected content type. Expected application/json.")
+        
+        # 解析 JSON 响应并提取最新版本号
         latest_version = response.json()["info"]["version"]
         return latest_version
     except requests.RequestException as e:
-        raise RuntimeError("Failed to get latest pip version.") from e
-
+        # 处理网络请求异常
+        raise RuntimeError("Failed to get latest pip version due to network error.") from e
+    except ValueError as e:
+        # 处理解析 JSON 数据时的异常
+        raise RuntimeError("Failed to parse response data.") from e
+SUCCESS_MSG = "pip has been updated to {}"
+FAILURE_MSG = "Failed to update pip: we don't know why"
 def update_pip(latest_version):
     """
     更新 pip 到最新版本。
@@ -354,47 +396,76 @@ def update_pip(latest_version):
     Args:
         latest_version (str): 最新的 pip 版本号。
     """
-    try:
-        up_pip=subprocess.run(["pip", "install", "--upgrade", "pip","--break-system-packages"], check=True)
-        if "Successfully installed" in up_pip.stdout.decode():
-            status_label.config(text=f"pip has been updated to {latest_version}")
-            update_pip_button_text()
-        else:
-            status_label.config(text=f"Failed to update pip.:we don't know why")
-            update_pip_button_text()
-        root.after(3000, clear_a)
-    except subprocess.CalledProcessError as e:
+    # 检查 latest_version 是否符合版本号格式
+    if not re.match(r'^\d+\.\d+\.\d+$', latest_version):
+        raise ValueError("Invalid version format")
+
+    def try_update(command):
         try:
-            up_pip=subprocess.run(["pip3", "install", "--upgrade", "pip","--break-system-packages"], check=True)
-            if "Successfully installed" in up_pip.stdout.decode():
-                status_label.config(text=f"pip has been updated to {latest_version}")
+            up_pip = subprocess.run(command, capture_output=True, text=True, check=True)
+            if "Successfully installed" in up_pip.stdout:
+                status_label.config(text=SUCCESS_MSG.format(latest_version))
                 update_pip_button_text()
             else:
-                status_label.config(text=f"Failed to update pip.:we don't know why")
+                status_label.config(text=FAILURE_MSG)
                 update_pip_button_text()
             root.after(3000, clear_a)
         except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"Failed to update pip.:{str(e)}") from e
+            logging.error(f"Failed to update pip with '{command[0]}': {str(e)}")
+            raise
+
+    try:
+        try_update(["pip", "install", "--upgrade", "pip", "--break-system-packages"])
+    except subprocess.CalledProcessError:
+        try_update(["pip3", "install", "--upgrade", "pip", "--break-system-packages"])
         
+def get_versions():
+    """
+    获取当前和最新的 pip 版本。在前面有函数
+    """
+    try:
+        current_version = get_current_pip_version()
+        latest_version = get_latest_pip_version()
+        return current_version, latest_version
+    except (ValueError, TypeError) as e:
+        logging.error(f"Data Error: {str(e)}")
+        raise
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        raise
+    except Exception as e:
+        logging.error(f"Unknown Error: {str(e)}")
+        raise
+
+def update_status(text):
+    """
+    更新状态标签。
+    """
+    root.after(0, lambda: status_label.config(text=text))
+
+def update_pip_if_needed(current_version, latest_version):
+    """
+    如果需要，更新 pip 版本。
+    """
+    if current_version != latest_version:
+        update_status(f"Current pip version: {current_version}\nLatest pip version: {latest_version}\nUpdating pip...")
+        update_pip(latest_version)
+    else:
+        update_status(f"pip is up to date: {current_version}")
+        root.after(3000, clear_a)
+
 def check_pip_version():
     """
     检查当前 pip 版本是否为最新版本，如果不是则进行更新。
     """
     upgrade_pip_button.config(state="disabled")
     try:
-        current_version = get_current_pip_version()
-        latest_version = get_latest_pip_version()
-
-        if current_version != latest_version:
-            status_label.config(text=f"Current pip version: {current_version}\nLatest pip version: {latest_version}\nUpdating pip...")
-            update_pip(latest_version)
-        else:
-            status_label.config(text=f"pip is up to date: {current_version}")
-            root.after(3000, clear_a)
+        current_version, latest_version = get_versions()
+        update_pip_if_needed(current_version, latest_version)
     except Exception as e:
-        status_label.config(text=f"Error: {str(e)}")
+        update_status(f"Error: {str(e)}")
     finally:
-        upgrade_pip_button.config(state="enabled")
+        root.after(0, lambda: upgrade_pip_button.config(state="enabled"))
 
 def upgrade_pip():
     """
@@ -410,42 +481,50 @@ def upgrade_pip():
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
         root.after(3000, clear_a)
+
+
 def install_package():
+    def clear_status_label():
+        root.after(3000, clear_a)
     install_button.config(state="disabled")
     try:
-        #pip freeze>python_modules.txt
+        # pip freeze > python_modules.txt
         subprocess.check_output(["python3", "--version"])
         package_name = package_entry.get()
         
-        def install_package_thread():  
+        if not re.match(r'^[a-zA-Z0-9\-_]+$', package_name):
+            status_label.config(text="Invalid package name.")
+            clear_status_label()
+            return
+
+        def install_package_thread():
             try:
                 installed_packages = subprocess.check_output(["python3", "-m", "pip", "list", "--format=columns"], text=True)
                 if package_name.lower() in installed_packages.lower():
                     status_label.config(text=f"Package '{package_name}' is already installed.")
-                    root.after(3000,clear_a)
                 else:
                     result = subprocess.run(["python3", "-m", "pip", "install", package_name], capture_output=True, text=True)
                     if "Successfully installed" in result.stdout:
                         status_label.config(text=f"Package '{package_name}' has been installed successfully!")
-                        root.after(3000,clear_a)
-                        #Requirement already satisfied
-                    #elif "Requirement already satisfied" in result.stdout:
-                        #status_label.config(text=f"Package '{package_name}' is already installed.")
-                        #root.after(3000,clear_a)
                     else:
                         status_label.config(text=f"Error installing package '{package_name}': {result.stderr}")
-                        root.after(3000,clear_a)
+            except subprocess.CalledProcessError as e:
+                status_label.config(text=f"Error running pip command: {e.output}")
             except Exception as e:
                 status_label.config(text=f"Error installing package '{package_name}': {str(e)}")
-                root.after(3000,clear_a)
-        install_thread = threading.Thread(target=install_package_thread,daemon=True)
+            finally:
+                clear_status_label()
+        install_thread = threading.Thread(target=install_package_thread, daemon=True)
         install_thread.start()
     except FileNotFoundError:
         status_label.config(text="Python is not installed.")
-        root.after(3000,clear_a)
+        clear_status_label()
+    except subprocess.CalledProcessError as e:
+        status_label.config(text=f"Error checking Python version: {e.output}")
+        clear_status_label()
     except Exception as e:
         status_label.config(text=f"Error: {str(e)}")
-        root.after(3000,clear_a)
+        clear_status_label()
     install_button.config(state="enabled")
 def uninstall_package():
     uninstall_button.config(state="disabled")
