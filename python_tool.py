@@ -7,6 +7,7 @@ import requests
 import getpass
 import shutil
 import re
+import time
 import sv_ttk
 import shlex
 import logging
@@ -135,15 +136,38 @@ def check_python_installation(delay=3000):
         root.after(delay, clear_a)
 
 def sav_ver():
-    user_name = getpass.getuser()
-    version_len=len(VERSIONS)
-    get=version_combobox.get()
-    for i in range(version_len):
-        if get in VERSIONS[i]:
-            if os.path.exists(f"/Users/{user_name}/pt_saved/")==False:
-                os.mkdir(f"/Users/{user_name}/pt_saved/")
-            with open(f"/Users/{user_name}/pt_saved/version.txt","w") as wri:
-                wri.write(get)
+    # 获取用户主目录
+    user_home = os.path.expanduser("~")
+    
+    # 获取用户选择的版本
+    selected_version = version_combobox.get()
+    
+    # 检查选择的版本是否在有效版本列表中
+    if selected_version in VERSIONS:
+        # 构建保存目录路径
+        save_dir = os.path.join(user_home, "pt_saved")
+        
+        try:
+            # 确保保存目录存在
+            os.makedirs(save_dir, exist_ok=True)
+            
+            # 写入版本信息到文件
+            with open(os.path.join(save_dir, "version.txt"), "w") as file:
+                file.write(selected_version)
+        except OSError as e:
+            # 捕获并打印文件操作异常
+            print(f"Error: {e}")
+
+def refresh_versions():
+    while True:
+        sav_ver()
+        time.sleep(0.1)
+
+# 启动版本刷新线程
+
+
+# 主线程可以继续执行其他任务
+print("Version refreshing started in the background.")
 def clear_a():
     status_label.config(text="")
 def clear_b():
@@ -313,7 +337,7 @@ def get_current_pip_version():
         str: 当前 pip 版本号。
     """
     try:
-        command = "pip3 --version"
+        command = "python3 -m pip --version"
         args = shlex.split(command)
         output = subprocess.check_output(args).decode().strip()
         logging.info(f"Command output: {output}")
@@ -415,9 +439,9 @@ def update_pip(latest_version):
             raise
 
     try:
-        try_update(["pip", "install", "--upgrade", "pip", "--break-system-packages"])
+        try_update(["python3","-m","pip", "install", "--upgrade", "pip", "--break-system-packages"])
     except subprocess.CalledProcessError:
-        try_update(["pip3", "install", "--upgrade", "pip", "--break-system-packages"])
+        try_update(["python3","-m","pip3", "install", "--upgrade", "pip", "--break-system-packages"])
         
 def get_versions():
     """
@@ -676,7 +700,6 @@ def update_pt():
             lab.config(text=f"Error:{e}")
     def no():
         check.deiconify()
-
     check=tk.Tk()
     check.title("updater") 
     check_pro=ttk.Progressbar(check,length=200,mode="determinate")
@@ -824,6 +847,9 @@ load_theme()
 # Set sv_ttk theme
 update_pip_button_text()
 check_python_installation()
+
+refresh_thread = threading.Thread(target=refresh_versions, daemon=True)
+refresh_thread.start()
 root.resizable(False,False)
 root.mainloop()
 #root.after(3000,)
