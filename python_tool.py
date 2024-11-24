@@ -633,92 +633,7 @@ def load_com():
     except Exception:
         return 0
 user_name = getpass.getuser()
-def update_pt():
-    def check_ver():
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
-        }
-        # root.after(2000,clear_b)
-        proxy = proxies()
-        url = get_url(2)
-        file_name = url.split("/")[-1]
-        user_name = getpass.getuser()
-        destination = f"/Users/{user_name}/pt_saved"
-        
-        try:
-            os.mkdir(destination + "/" + "Update")
-        except FileExistsError:
-            pass
-        response = requests.get(url, stream=True, proxies=proxy, headers=headers)
-        file_size = int(response.headers.get('content-length', 0))
-        #url = "http://githubtohaoyangli.github.io/info/info.json"
-        r = requests.get(url, headers=headers,verify=False)
-        latest_version = r.json()["releases"]["release1"]["version"]
-        #if int(latest_version) >int(myver):
-        
-        return str(str(latest_version).split(".")[0]+","+str(latest_version).split(".")[1]+","+str(latest_version).split(".")[2]).split(",")
-    def prepare_download():
-        myver="1.1.0"
-        myverl=str(myver).split(".")
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
-        }
-        url=[str(get_url(3)),]
-        try:
-            check_pro['value']=0 
-            check_pro["maximum"]=100
-            proxie=proxies()
-            if int(check_ver()[0]) > int(myverl[0]) or int(check_ver()[1]) > int(myverl[1]) or int(check_ver()[2]) > int(myverl[2]):
-                r = requests.get(url, headers=headers,verify=False,stream=True,proxies=proxie)
-                file_size = int(r.headers.get('content-length', 0))
-                user=getpass.getuser()
-                file_des=f"/Users/{user}/pt_saved/update/dumpdownload"
-                if os.path.exists(f"/Users/{user}/pt_saved/update/dumpdownload")==False:
-                    os.mkdir(f"/Users/{user}/pt_saved/update/dumpdownload")  
-                if os.path.exists(file_des+"/python_tool")==False:
-                    os.mkdir(file_des+"/python_tool")
-                if os.path.exists(file_des+"/updater")==False:
-                    os.mkdir(file_des+"/updater")
-                des_pt=file_des+"/python_tool"
-                des_updater=file_des+"/updater"
-                def download(url,des):
-                    with open(file_des, "wb") as file:
-                        downloaded = 0
-                        chunk_size = 1024*100
-                        for data in r.iter_content(chunk_size=chunk_size):
-                            file.write(data)
-                            downloaded += len(data)
-                            percentage = (downloaded / file_size) * 100
-                            downloaded_mb = downloaded / (1024*1024)
-                            status_label.config(text=f"Downloading: {percentage:.3f}% | {downloaded_mb:.3f} MB | {file_size/(1024*1024):.3f} MB ｜ ")
-                            status_label.update()
-                            check_pro["value"]=percentage
-                            check_pro.update()
-            else:
-                check.destroy()
-        except Exception as e:
-            lab.config(text=f"Error:{e}")
-    def no():
-        check.deiconify()
-    check=tk.Tk()
-    check.title("updater") 
-    check_pro=ttk.Progressbar(check,length=200,mode="determinate")
-    check_pro.grid(row=0,column=0,columnspan=3,padx=10,pady=10)
-    lab=ttk.Label(check,text="Checking for update....")
-    lab.grid(row=1,column=0,columnspan=3,padx=10,pady=10)
-    yes_bu=ttk.Button(check,text="Yes",command=prepare_download)
-    yes_bu.grid(row=2,column=0,columnspan=3,padx=10,pady=10)
-    yes_bu=ttk.Button(check,text="No",command=no)
-    yes_bu.grid(row=2,column=0,columnspan=3,padx=10,pady=10)
 
-    
-    
-    
-    
-    #root.deiconify()
-    
-    
-        
 def switch_theme():
     user_name = getpass.getuser()
 
@@ -837,11 +752,7 @@ themes.grid(row=5,column=0,padx=10,pady=10,columnspan=3)
 sav_label = ttk.Label(frameb_tab, text="")
 sav_label.grid(row=6, column=0,columnspan=3)
 #update(not available)
-top=tk.Menu(root)
-menucheck = tk.Menu(top)
-top.add_cascade(label='Menu',menu=menucheck)
-menucheck.add_command(label="Check for update",command=update_pt)
-root.config(menu=top)
+
 load()
 load_theme()
 # Set sv_ttk theme
