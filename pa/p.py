@@ -1,5 +1,5 @@
 import sys
-from qfluentwidgets import PushButton, VBoxLayout,PillPushButton,PrimaryPushButton,TogglePushButton,CalendarPicker, FluentTranslator,DatePicker,FastCalendarPicker,label
+from qfluentwidgets import PushButton, VBoxLayout,PillPushButton,PrimaryPushButton,TogglePushButton,CalendarPicker, FluentTranslator,DatePicker,FastCalendarPicker,TitleLabel
 from PyQt5.QtWidgets import  QWidget,QMainWindow,QApplication,QVBoxLayout,QLabel
 from enum import Enum
 from qfluentwidgets import FluentIcon as FIF
@@ -24,7 +24,7 @@ class MainWindow(QMainWindow):
         self.buttonb.clicked.connect(self.on_click)
         self.cale=FastCalendarPicker(self)
         self.cale.dateChanged.connect(self.cal)
-        self.laba=QLabel("youe",self)
+        self.laba=TitleLabel("youe",self)
         # 创建一个布局管理器
         layout = QVBoxLayout()
         # 将按钮添加到布局管理器中
