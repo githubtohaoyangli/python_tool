@@ -1,5 +1,5 @@
 import sys
-from qfluentwidgets import PushButton, VBoxLayout,PillPushButton,PrimaryPushButton,TogglePushButton,CalendarPicker, FluentTranslator,DatePicker,FastCalendarPicker,TitleLabel
+from qfluentwidgets import PushButton, VBoxLayout,PillPushButton,PrimaryPushButton,TogglePushButton,CalendarPicker, FluentTranslator,DatePicker,FastCalendarPicker,TitleLabel,FluentIcon
 from PyQt5.QtWidgets import  QWidget,QMainWindow,QApplication,QVBoxLayout,QLabel
 from enum import Enum
 from qfluentwidgets import FluentIcon as FIF
@@ -17,7 +17,7 @@ class MainWindow(QMainWindow):
         #self.setGeometry(100, 100, 300, 200)
 
         # 创建一个按钮
-        self.buttona = PushButton("hello", self,FIF.ACCEPT)
+        self.buttona = PushButton(FluentIcon.FOLDER,"hello", self)
         # 将按钮的点击事件连接到 on_click 槽函数
         self.buttona.clicked.connect(self.on_click)
         self.buttonb=TogglePushButton("you",self)
