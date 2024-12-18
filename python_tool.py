@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog,messagebox
 import subprocess
 import os
 import threading
@@ -279,12 +279,21 @@ def update():
     myver = "1.1.0"
     if int(ver) > int(myver):
         pass
-
+def about():
+    about=messagebox.showinfo(title="About",message="Python_tool 1.1\nbuild:1101\n")
 # 创建主窗口
 root = tk.Tk()
 root.title("Python_Tool")
 root.resizable(False, False)
 root.iconbitmap('pythontool.ico')
+top=tk.Menu(root)
+aboutcommand=tk.Menu(top)
+top.add_cascade(label="Help",menu=aboutcommand)
+
+aboutcommand.add_command(label="About",command=about)
+
+
+root.config(menu=top)
 
 # 创建 Notebook
 note = ttk.Notebook(root)
