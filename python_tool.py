@@ -21,6 +21,7 @@ if not os.path.exists(f"{my_path}\\saved"):
 
 # 可供选择的 Python 版本列表
 VERSIONS = [
+    "3.13.0",
     "3.12.0",
     "3.11.0",
     "3.10.0",
