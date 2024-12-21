@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="715d8026-720a-4961-bcd4-1f628bca56ec" name="更改" comment="">
+    <list default="true" id="715d8026-720a-4961-bcd4-1f628bca56ec" name="更改" comment="py">
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/python_tool.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/python_tool.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/python_tool.py" beforeDir="false" afterPath="$PROJECT_DIR$/python_tool.py" afterDir="false" />
@@ -93,7 +93,12 @@
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="py" />
+    <option name="LAST_COMMIT_MESSAGE" value="py" />
+  </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/pyquick$p.coverage" NAME="p 覆盖结果" MODIFIED="1734771438746" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pa" />
     <SUITE FILE_PATH="coverage/python_tool$python_tool.coverage" NAME="python_tool 覆盖结果" MODIFIED="1734755859895" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
