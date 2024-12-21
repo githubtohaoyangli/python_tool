@@ -666,13 +666,26 @@ def show_about():
         messagebox.showinfo("About", f"Version: dev\nBuild: 1921\n{time_lim} days left.")
 #GUI
 if __name__ == "__main__":
+    #启动laugh = True
+    try:
+        user_name = getpass.getuser()
+        path=f"/User/{user_name}/pt_saved/launch/launch.app"
+        if(os.path.exists(path)):
+            subprocess.run(["open",f"/User/{user_name}/pt_saved/launch/launch.app"])
+        else:
+            raise FileNotFoundError
+
+    except Exception:
+        messagebox.showerror("ERROR","You can not open python_tool:exitcode(0xB)")
+        exit(0)
     if(datetime.datetime.now()>=datetime.datetime(2025,3,13)):
-        messagebox.showerror("Error","It is broken !")
+        messagebox.showerror("Error","You can not open python_tool:exitcode(0x1)")
         exit(1)
-    if(datetime.datetime.now()>=datetime.datetime(2025,2,1)):
+    elif(datetime.datetime.now()>=datetime.datetime(2025,2,1)):
         messagebox.showwarning("up","Will cannot open on 2025,3,13")
     else:
-        messagebox.showinfo("Welcome","Welcome to Python Tool")
+
+        messagebox.showinfo("Welcome","Welcome to Python Tool!")
     root = tk.Tk()
     root.title("Python Tool")
     menu_bar = tk.Menu(root)
