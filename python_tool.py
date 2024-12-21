@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog,messagebox
 import subprocess
 import os
 import threading
@@ -11,7 +11,8 @@ import time
 import sv_ttk
 import shlex
 import logging
-from concurrent.futures import ThreadPoolExecutor
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import functools
 cancel_event = threading.Event()
 user_name = getpass.getuser()
@@ -175,7 +176,22 @@ def get_url(des):
         return "https://githubtohaoyangli.github.io/info/info.json"
     elif des==3:
         return "https://githubtohaoyangli.github.io/download/python_tool/Mac/Latest/python_tool.dmg"
-def download_file(destination_path):
+
+
+def download_chunk(url, start, end, destination, chunk_size=1024 * 100):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36',
+        'Range': f'bytes={start}-{end}'
+    }
+    proxie = proxies()
+    response = requests.get(url, headers=headers, stream=True, proxies=proxie)
+    with open(destination, "r+b") as file:
+        file.seek(start)
+        for data in response.iter_content(chunk_size=chunk_size):
+            file.write(data)
+            yield len(data)
+
+def download_file(destination_path, num_threads=8):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.102 Safari/537.36'
     }
@@ -184,74 +200,85 @@ def download_file(destination_path):
     destination = os.path.join(destination_path, file_name)
     if os.path.exists(destination):
         os.remove(destination)
-    def download(url, frame):
-        download_pb['value'] = 0
-        download_pb["maximum"] = 100
-        proxie = proxies()
-        response = requests.get(url, stream=True, proxies=proxie, headers=headers)
-        file_size = int(response.headers.get('content-length', 0))
-        with open(frame, "wb") as file:
-            downloaded = 0
-            chunk_size = 1024 * 100
-            for data in response.iter_content(chunk_size=chunk_size):
-                if cancel_event.is_set():
-                    status_label.config(text="Download Interrupted!")
-                    root.after(3000, clear_a)
-                    return
-                file.write(data)
-                downloaded += len(data)
-                percentage = (downloaded / file_size) * 100
-                downloaded_mb = downloaded / (1024 * 1024)
-                status_label.config(text=f"Downloading: {percentage:.3f}% | {downloaded_mb:.3f} MB | {file_size / (1024 * 1024):.3f} MB ｜ ")
-                status_label.update()
-                download_pb["value"] = percentage
-                download_pb.update()
-        status_label.config(text="Download Complete!")
-        root.after(3000, clear_a)
+    download_button.config(state="disabled")
+    for attempt in range(3):
+        try:
+            response = requests.head(url, headers=headers, proxies=proxies())
+            response.raise_for_status()
+            file_size = int(response.headers.get('content-length', 0))
+            chunk_size = file_size // num_threads
+            with open(destination, "wb") as file:
+                file.truncate(file_size)
 
-    try:
-        sav_ver()
-        down_thread = threading.Thread(target=download, args=(url, destination), daemon=True)
-        down_thread.start()
-        cancel_download_button.config(state="enabled")
-        down_thread.join()
+            with ThreadPoolExecutor(max_workers=num_threads) as executor:
+                futures = []
+                for i in range(num_threads):
+                    start = i * chunk_size
+                    end = start + chunk_size - 1 if i < num_threads - 1 else file_size - 1
+                    futures.append(executor.submit(download_chunk, url, start, end, destination, chunk_size))
+
+                downloaded = 0
+                for future in as_completed(futures):
+                    for chunk_size in future.result():
+                        downloaded += chunk_size
+                        percentage = (downloaded / file_size) * 100
+                        downloaded_mb = downloaded / (1024 * 1024)
+                        status_label.config(
+                            text=f"Downloading: {percentage:.3f}% | {downloaded_mb:.3f} MB | {file_size / (1024 * 1024):.3f} MB ｜ ")
+                        status_label.update()
+                        download_pb["value"] = percentage
+                        download_pb.update()
+
+            status_label.config(text="Download Complete!")
+            root.after(3000, clear_a)
+            cancel_download_button.config(state="disabled")
+            download_button.config(state="normal")
+            break
+        except Exception as e:
+            status_label.config(text=f"Download Failed: {str(e)}. Retrying...")
+            time.sleep(2)
+    else:
+        status_label.config(text="Download Failed after 3 attempts.")
+        root.after(3000, clear_a)
         cancel_download_button.config(state="disabled")
-    except Exception as e:
-        status_label.config(text=f"Download Failed: {str(e)}")
-        root.after(3000, clear_a)
+        download_button.config(state="normal")
 
-# 中断下载函数
 def cancel_download():
     cancel_event.set()
     status_label.config(text="Cancelling download...")
     download_pb['value'] = 0  # 重置进度条
-    
-    # 获取目标文件路径
+
     destination_path = destination_entry.get()
     url = get_url(1)
     file_name = url.split("/")[-1]
     destination = os.path.join(destination_path, file_name)
-    
-    # 检查目标文件是否存在，如果存在则删除
+
     if os.path.exists(destination):
         os.remove(destination)
         status_label.config(text="Download cancelled and incomplete file removed.")
+        download_button.config(state="normal")
     else:
         status_label.config(text="Download cancelled.")
-    
+        download_button.config(state="normal")
     root.after(3000, clear_a)
 
-# 下载版本函数
 def download_selected_version():
     destination_path = destination_entry.get()
+    num_threads = int(threads_entry.get())
 
     if not os.path.exists(destination_path):
         status_label.config(text="Invalid path!")
         root.after(2000, clear_a)
         return
 
+    if num_threads < 1 or num_threads > 128:
+        status_label.config(text="Invalid number of threads. Must be between 1 and 128.")
+        root.after(2000, clear_a)
+        return
+
     cancel_event.clear()
-    down_thread = threading.Thread(target=download_file, args=(destination_path,), daemon=True)
+    cancel_download_button.config(state="enabled")
+    down_thread = threading.Thread(target=download_file, args=(destination_path, num_threads), daemon=True)
     down_thread.start()
 status_label = None
 upgrade_pip_button = None
@@ -604,12 +631,17 @@ def load_theme():
             sv_ttk.set_theme("light")
     except Exception:
         sv_ttk.set_theme("light")
-
+def show_about():
+    messagebox.showinfo("About", "Version: dev\nBuild: 1911")
 #GUI
 
 root = tk.Tk()
 root.title("Python Tool")
-
+menu_bar = tk.Menu(root)
+root.config(menu=menu_bar)
+help_menu = tk.Menu(menu_bar, tearoff=0)
+menu_bar.add_cascade(label="Help", menu=help_menu)
+help_menu.add_command(label="About", command=show_about)
 #TAB CONTROL
 tab_control = ttk.Notebook(root)
 #MODE TAB
@@ -638,26 +670,33 @@ download_button = ttk.Button(framea_tab, text="Download Selected Version", comma
 download_button.grid(row=2, column=0, columnspan=5, pady=10)
 cancel_download_button = ttk.Button(framea_tab, text="Cancel Download", command=cancel_download, state="disabled")
 cancel_download_button.grid(row=3, column=0, columnspan=3, pady=10)
+threads_label = ttk.Label(framea_tab, text="Number of Threads:")
+threads_label.grid(row=4, column=0, pady=10)
+
+threads_entry = ttk.Entry(framea_tab, width=10)
+threads_entry.grid(row=4, column=1, pady=10)
+threads_entry.insert(0, "8")
 #PIP(UPDRADE)
 pip_upgrade_button = ttk.Button(framea_tab, text="Pip Version: Checking...", command=upgrade_pip)
-pip_upgrade_button.grid(row=4, column=0, columnspan=3, pady=20)
+pip_upgrade_button.grid(row=5, column=0, columnspan=3, pady=20)
 upgrade_pip_button = pip_upgrade_button  # Alias for disabling/enabling later
 package_label = ttk.Label(framea_tab, text="Enter Package Name:")
-package_label.grid(row=5, column=0, pady=10)
+package_label.grid(row=6, column=0, pady=10)
 package_entry = ttk.Entry(framea_tab, width=40)
-package_entry.grid(row=5, column=1, pady=10)
+package_entry.grid(row=6, column=1, pady=10)
 #PIP(INSTALL)
 install_button = ttk.Button(framea_tab, text="Install Package", command=install_package)
-install_button.grid(row=6, column=0, columnspan=3, pady=10)
+install_button.grid(row=7, column=0, columnspan=3, pady=10)
 #PIP(UNINSTALL)
 uninstall_button = ttk.Button(framea_tab, text="Uninstall Package", command=uninstall_package)
-uninstall_button.grid(row=7, column=0, columnspan=3, pady=10)
+uninstall_button.grid(row=8, column=0, columnspan=3, pady=10)
 #progressbar-options:length(number),mode(determinate(从左到右)，indeterminate(来回滚动)),...length=500,mode="indeterminate"
 download_pb=ttk.Progressbar(framea_tab,length=500,mode="determinate")
-download_pb.grid(row=8,column=0,pady=20,columnspan=3)
+download_pb.grid(row=9,column=0,pady=20,columnspan=3)
 #TEXT(TAB1)
 status_label = ttk.Label(framea_tab, text="", padding="10")
-status_label.grid(row=9, column=0, columnspan=3)
+status_label.grid(row=10, column=0, columnspan=3)
+
 #SETTINGS TAB
 fsetting = ttk.Frame(root, padding="20")
 tab_control.add(fsetting,text="Settings")
