@@ -18,9 +18,9 @@ user_name = getpass.getuser()
 if os.path.exists(f"/Users/{user_name}/pt_saved/update"):
     shutil.rmtree(f"/Users/{user_name}/pt_saved/update")
     os.system("kill Update")
+
 VERSIONS = [
-    "3.12.0",
-    "3.12.1",
+    "3.12.0","3.12.1",
     "3.12.2",
     "3.12.3",
     "3.12.4",
@@ -94,6 +94,7 @@ VERSIONS = [
     "3.5.3",
     "3.5.4",
 ]
+
 MIRROR_PYTHODOWLOADER = [
     #https://registry.npmmirror.com/-/binary/python/3.10.0
     #https://registry.npmmirror.com/-/binary/python/3.10.0/python-3.10.0-amd64.exe
@@ -110,14 +111,14 @@ PYTHONTOOL_DOWNLAOD = [
 def check_python_installation(delay=3000):
     """
     检查Python3是否已安装。
-    
+
     本函数尝试执行'python3 --version'命令来检查Python3的安装情况。
     如果命令执行出错，说明Python3未安装，则更新界面标签并禁用相关按钮。
     """
     try:
         # 执行命令并获取输出
         version_output = subprocess.check_output(["python3", "--version"], stderr=subprocess.STDOUT, text=True)
-        
+
         # 验证输出是否包含预期的Python版本信息
         if "Python 3" not in version_output:
             raise ValueError("Unexpected Python version output: " + version_output.strip())
@@ -127,7 +128,7 @@ def check_python_installation(delay=3000):
         pip_upgrade_button.config(state="disabled")
         install_button.config(state="disabled")
         uninstall_button.config(state="disabled")
-        
+
         # 延时指定时间后清除当前状态标签的文本
         root.after(delay, clear_a)
     except ValueError as e:
@@ -138,19 +139,19 @@ def check_python_installation(delay=3000):
 def sav_ver():
     # 获取用户主目录
     user_home = os.path.expanduser("~")
-    
+
     # 获取用户选择的版本
     selected_version = version_combobox.get()
-    
+
     # 检查选择的版本是否在有效版本列表中
     if selected_version in VERSIONS:
         # 构建保存目录路径
         save_dir = os.path.join(user_home, "pt_saved")
-        
+
         try:
             # 确保保存目录存在
             os.makedirs(save_dir, exist_ok=True)
-            
+
             # 写入版本信息到文件
             with open(os.path.join(save_dir, "version.txt"), "w") as file:
                 file.write(selected_version)
@@ -291,20 +292,20 @@ def cancel_download():
     cancel_event.set()
     status_label.config(text="Cancelling download...")
     download_pb['value'] = 0  # 重置进度条
-    
+
     # 获取目标文件路径
     destination_path = destination_entry.get()
     url = get_url(1)
     file_name = url.split("/")[-1]
     destination = os.path.join(destination_path, file_name)
-    
+
     # 检查目标文件是否存在，如果存在则删除
     if os.path.exists(destination):
         os.remove(destination)
         status_label.config(text="Download cancelled and incomplete file removed.")
     else:
         status_label.config(text="Download cancelled.")
-    
+
     root.after(3000, clear_a)
 
 # 下载版本函数
@@ -332,7 +333,7 @@ logging.basicConfig(level=logging.INFO)
 def get_current_pip_version():
     """
     获取当前安装的 pip 版本。
-    
+
     Returns:
         str: 当前 pip 版本号。
     """
@@ -384,12 +385,12 @@ def update_pip_button_text():
         root.after(5000, update_pip_button_text)
     # 提交任务到线程池
     executor.submit(update_pip_button)
-    
+
 @functools.lru_cache(maxsize=1)
 def get_latest_pip_version():
     """
     获取最新可用的 pip 版本。
-    
+
     Returns:
         str: 最新的 pip 版本号。
     """
@@ -397,11 +398,11 @@ def get_latest_pip_version():
         # 发起 HTTP GET 请求获取 pip 的最新版本信息
         response = requests.get("https://pypi.org/pypi/pip/json")
         response.raise_for_status()
-        
+
         # 检查响应头中的 Content-Type 是否为 application/json
         if 'application/json' not in response.headers.get('Content-Type', ''):
             raise ValueError("Unexpected content type. Expected application/json.")
-        
+
         # 解析 JSON 响应并提取最新版本号
         latest_version = response.json()["info"]["version"]
         return latest_version
@@ -416,7 +417,7 @@ FAILURE_MSG = "Failed to update pip: we don't know why"
 def update_pip(latest_version):
     """
     更新 pip 到最新版本。
-    
+
     Args:
         latest_version (str): 最新的 pip 版本号。
     """
@@ -442,7 +443,7 @@ def update_pip(latest_version):
         try_update(["python3","-m","pip", "install", "--upgrade", "pip", "--break-system-packages"])
     except subprocess.CalledProcessError:
         try_update(["python3","-m","pip3", "install", "--upgrade", "pip", "--break-system-packages"])
-        
+
 def get_versions():
     """
     获取当前和最新的 pip 版本。在前面有函数
@@ -515,7 +516,7 @@ def install_package():
         # pip freeze > python_modules.txt
         subprocess.check_output(["python3", "--version"])
         package_name = package_entry.get()
-        
+
         if not re.match(r'^[a-zA-Z0-9\-_]+$', package_name):
             status_label.config(text="Invalid package name.")
             clear_status_label()
@@ -582,7 +583,7 @@ def uninstall_package():
         root.after(3000,clear_a)
     uninstall_button.config(state="enabled")
 def load():
-    user_name = getpass.getuser() 
+    user_name = getpass.getuser()
     if os.path.exists(f"/Users/{user_name}/pt_saved/proxy.txt"):
         with open(f"/Users/{user_name}/pt_saved/proxy.txt","r") as re:
             ree=re.readlines()
@@ -607,7 +608,7 @@ def save():
     address=address_entry.get()
     port=port_entry.get()
     try:
-        user_name = getpass.getuser() 
+        user_name = getpass.getuser()
         if os.path.exists(f"/Users/{user_name}/pt_saved/proxy.txt"):
             os.remove(f"/Users/{user_name}/pt_saved/proxy.txt")
         if os.path.exists(f"/Users/{user_name}/pt_saved/")==False:
