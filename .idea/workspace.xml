@@ -55,7 +55,7 @@
     "Python.python_tool.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
-    "Shell Script.build.sh.executor": "Run",
+    "Shell Script.build.sh.executor": "Debug",
     "git-widget-placeholder": "dev-mac",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -89,7 +89,7 @@
       <workItem from="1734752366533" duration="731000" />
       <workItem from="1734755706661" duration="832000" />
       <workItem from="1734756740206" duration="973000" />
-      <workItem from="1734774564861" duration="6449000" />
+      <workItem from="1734774564861" duration="7873000" />
     </task>
     <task id="LOCAL-00001" summary="py">
       <option name="closed" value="true" />
@@ -123,7 +123,15 @@
       <option name="project" value="LOCAL" />
       <updated>1734777928345</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="...">
+      <option name="closed" value="true" />
+      <created>1734783246056</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1734783246056</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -135,7 +143,7 @@
     <option name="LAST_COMMIT_MESSAGE" value="..." />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/pyquick$python_tool.coverage" NAME="python_tool 覆盖结果" MODIFIED="1734783017963" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/pyquick$python_tool.coverage" NAME="python_tool 覆盖结果" MODIFIED="1734785018673" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/pyquick$p.coverage" NAME="p 覆盖结果" MODIFIED="1734771438746" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/pa" />
     <SUITE FILE_PATH="coverage/python_tool$python_tool.coverage" NAME="python_tool 覆盖结果" MODIFIED="1734755859895" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
