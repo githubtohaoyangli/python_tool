@@ -11,7 +11,7 @@ import time
 import sv_ttk
 import shlex
 import logging
-
+import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import functools
 cancel_event = threading.Event()
@@ -659,9 +659,20 @@ def load_theme():
     except Exception:
         sv_ttk.set_theme("light")
 def show_about():
-    messagebox.showinfo("About", "Version: dev\nBuild: 1918")
+    time_lim=(datetime.datetime(2025,3,13)-datetime.datetime.now()).days
+    if (datetime.datetime.now()>=datetime.datetime(2025,2,1)):
+        messagebox.showwarning("About", f"Version: dev\nBuild: 1921\n{time_lim} days left.")
+    else:
+        messagebox.showinfo("About", f"Version: dev\nBuild: 1921\n{time_lim} days left.")
 #GUI
 if __name__ == "__main__":
+    if(datetime.datetime.now()>=datetime.datetime(2025,3,13)):
+        messagebox.showerror("Error","It is broken !")
+        exit(1)
+    if(datetime.datetime.now()>=datetime.datetime(2025,2,1)):
+        messagebox.showwarning("up","Will cannot open on 2025,3,13")
+    else:
+        messagebox.showinfo("Welcome","Welcome to Python Tool")
     root = tk.Tk()
     root.title("Python Tool")
     menu_bar = tk.Menu(root)
