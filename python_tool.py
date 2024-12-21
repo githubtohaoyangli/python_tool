@@ -298,16 +298,23 @@ def get_current_pip_version():
         str: 当前 pip 版本号。
     """
     try:
-        command = "python3 -m pip --version"
-        args = shlex.split(command)
-        output = subprocess.check_output(args).decode().strip()
-        logging.info(f"Command output: {output}")
-        match = re.search(r'pip (\d+\.\d+\.\d+)', output)
-        if match:
-            pip_version = match.group(1)
-            return pip_version
-        else:
-            raise ValueError("Unexpected output format from pip --version.")
+        pipver=[]
+        for i in range(0,14,1):
+            try:
+                command = f"python3.{i} -m pip --version"
+                args = shlex.split(command)
+                output = subprocess.check_output(args).decode().strip()
+                logging.info(f"Command output: {output}")
+                match = re.search(r'pip (\d+\.\d+\.\d+)', output)
+                if match:
+                    pip_version = match.group(1)
+                    pipver.append(str(pip_version)+f":Python3.{i}")
+                    continue
+                else:
+                    raise ValueError("Unexpected output format from pip --version.")
+            except Exception:
+                pass
+        return list(pipver)
     except subprocess.CalledProcessError as e:
         logging.error("Failed to get current pip version due to a command error.", exc_info=True)
         raise RuntimeError("Failed to get current pip version due to a command error.") from e
@@ -334,8 +341,21 @@ def update_pip_button_text():
         try:
             # 获取当前 pip 版本
             current_version = get_current_pip_version()
+            your_version = ""
+
+            for i in range(len(current_version)):
+                pver = ""
+                try:
+                    pver = current_version[i].split(":")[1]
+                    if(i==len(current_version)-1):
+                        your_version += current_version[i].split(":")[0]+"("+str(pver)+")"
+                    else:
+                        your_version += current_version[i].split(":")[0]+"("+str(pver)+")"+";"
+                except:
+                    pass
+
             # 更新按钮文本
-            pip_upgrade_button.config(text=f"Pip Version: {current_version}")
+            pip_upgrade_button.config(text=f"Pip Version: {your_version}")
         except Exception as e:
             # 记录错误日志
             logging.error(f"Error updating pip button text: {str(e)}")
@@ -376,7 +396,7 @@ def get_latest_pip_version():
         raise RuntimeError("Failed to parse response data.") from e
 SUCCESS_MSG = "pip has been updated to {}"
 FAILURE_MSG = "Failed to update pip: we don't know why"
-def update_pip(latest_version):
+def update_pip(latest_version,pver):
     """
     更新 pip 到最新版本。
     
@@ -430,16 +450,17 @@ def update_status(text):
     """
     root.after(0, lambda: status_label.config(text=text))
 
-def update_pip_if_needed(current_version, latest_version):
+def update_pip_if_needed(current_version, latest_version,pver):
     """
     如果需要，更新 pip 版本。
     """
     if current_version != latest_version:
-        update_status(f"Current pip version: {current_version}\nLatest pip version: {latest_version}\nUpdating pip...")
-        update_pip(latest_version)
+        update_status(f"{pver}\nCurrent pip version: {current_version}\nLatest pip version: {latest_version}\nUpdating pip...")
+        update_pip(latest_version,pver)
     else:
-        update_status(f"pip is up to date: {current_version}")
+        update_status(f"pip is up to date: {current_version}({pver})")
         root.after(3000, clear_a)
+    time.sleep(3)
 
 def check_pip_version():
     """
@@ -448,7 +469,13 @@ def check_pip_version():
     upgrade_pip_button.config(state="disabled")
     try:
         current_version, latest_version = get_versions()
-        update_pip_if_needed(current_version, latest_version)
+        current_version = list(current_version)
+        for i in range(len(current_version)):
+            your_version = current_version[i].split(":")[0]
+            pver=current_version[i].split(":")[1]
+            update_pip_if_needed(your_version, latest_version,pver)
+
+
     except Exception as e:
         update_status(f"Error: {str(e)}")
     finally:
@@ -632,7 +659,7 @@ def load_theme():
     except Exception:
         sv_ttk.set_theme("light")
 def show_about():
-    messagebox.showinfo("About", "Version: dev\nBuild: 1911")
+    messagebox.showinfo("About", "Version: dev\nBuild: 1918")
 #GUI
 
 root = tk.Tk()
@@ -640,8 +667,10 @@ root.title("Python Tool")
 menu_bar = tk.Menu(root)
 root.config(menu=menu_bar)
 help_menu = tk.Menu(menu_bar, tearoff=0)
+
 menu_bar.add_cascade(label="Help", menu=help_menu)
 help_menu.add_command(label="About", command=show_about)
+help_menu.add_separator()
 #TAB CONTROL
 tab_control = ttk.Notebook(root)
 #MODE TAB
